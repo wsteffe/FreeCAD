@@ -737,6 +737,10 @@ void PropertySheet::moveCell(CellAddress currPos, CellAddress newPos, std::map<A
         // Remove merged cell data
         splitCell(currPos);
 
+        std::string alias;
+        if(cell->getAlias(alias))
+            cell->setAlias("");
+
         // Remove from old
         removeDependencies(currPos);
         data.erase(currPos);
