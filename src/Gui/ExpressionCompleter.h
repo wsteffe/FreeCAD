@@ -63,6 +63,8 @@ public:
 
     void setNoProperty(bool enabled=true);
 
+    void setSearchUnit(bool enabled=true);
+
     bool isInsideString() const {return insideString;}
 
 public Q_SLOTS:
@@ -75,6 +77,7 @@ private:
     void init();
     virtual QString pathFromIndex ( const QModelIndex & index ) const;
     virtual QStringList splitPath ( const QString & path ) const;
+    void showPopup(bool show);
 
     int prefixStart = 0;
     int prefixEnd = 0;
@@ -85,7 +88,8 @@ private:
 
     App::DocumentObjectT currentObj;
     bool noProperty = false;
-    bool checkInList;
+    bool checkInList = true;
+    bool searchUnit = false;
 };
 
 class GuiExport ExpressionLineEdit : public QLineEdit {
@@ -99,6 +103,7 @@ public:
     void hideCompleter();
     void setNoProperty(bool enabled=true);
     void setExactMatch(bool enabled=true);
+    void setSearchUnit(bool enabled=true);
 Q_SIGNALS:
     void textChanged2(QString text, int pos);
 public Q_SLOTS:
@@ -113,6 +118,7 @@ private:
     bool exactMatch;
     bool checkInList;
     char checkPrefix;
+    bool searchUnit = false;
 };
 
 class GuiExport ExpressionTextEdit : public QPlainTextEdit {
