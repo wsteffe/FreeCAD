@@ -21,6 +21,9 @@
  ***************************************************************************/
 
 #include "PreCompiled.h"
+
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <QApplication>
 #include <QPainter>
 #include <QDesktopWidget>
@@ -178,12 +181,28 @@ void DlgExpressionInput::textChanged(const QString &text)
 
         }
     }
-    catch (Base::Exception & e) {
-        ui->msg->setText(QString::fromUtf8(e.what()));
-        QPalette p(ui->msg->palette());
-        p.setColor(QPalette::WindowText, Qt::red);
-        ui->msg->setPalette(p);
+    catch (Base::ParserError & e) {
+        if (ui->expression->completerActive()
+                || boost::starts_with(e.what(), "syntax error, unexpected end of input")) {
+            ui->msg->setText(QString());
+        } else {
+            QPalette p(ui->msg->palette());
+            p.setColor(QPalette::WindowText, Qt::red);
+            ui->msg->setPalette(p);
+            ui->msg->setText(QString::fromUtf8(e.what()));
+        }
         ui->okBtn->setDisabled(true);
+    }
+    catch (Base::Exception & e) {
+        if (ui->expression->completerActive()) {
+            ui->msg->setText(QString());
+        } else {
+            QPalette p(ui->msg->palette());
+            p.setColor(QPalette::WindowText, Qt::red);
+            ui->msg->setPalette(p);
+            ui->msg->setText(QString::fromUtf8(e.what()));
+            ui->okBtn->setDisabled(true);
+        }
     }
 }
 
