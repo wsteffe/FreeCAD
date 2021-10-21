@@ -1101,7 +1101,7 @@ void ObjectIdentifier::resolve(ResolveResults &results) const
                     int ptype;
                     Property *prop = resolveProperty(owner,tmpSub,pindex,sobj,ptype);
                     if(prop) {
-                        // If we found sub object in previous attemp, look further
+                        // If we found sub object in previous attempt, look further
                         // to see which one has the better match
                         if(results.propertyType == PseudoSubObject && pindex+1 < (int)components.size()) {
                             Base::PyGILStateLocker lock;
@@ -1114,7 +1114,7 @@ void ObjectIdentifier::resolve(ResolveResults &results) const
                                 return;
                             } catch (...) {
                                 // Exception here means the sub-object
-                                // intepretation is a better match, so return
+                                // interpretation is a better match, so return
                                 // early. 
                                 return;
                             }
@@ -1650,7 +1650,7 @@ Property *ObjectIdentifier::resolveProperty(const App::DocumentObject *obj,
             std::string _subname;
             const char *s = subname.c_str();
 
-            // If no middle dot found, try interprete it as label
+            // If no middle dot found, try to interpret it as label
             if(ptype!=PseudoShape && subname[0]!='$' && subname.find('.') == std::string::npos) {
                 _subname = "$";
                 _subname += subname;
@@ -2403,7 +2403,7 @@ void ObjectIdentifier::resolveAmbiguity(ResolveResults &result) {
 
     std::string s = result.subObjectName;
     // We will support leading and (any consecutive) dots in the subname path.
-    // So no need to remove it. In fact, we delibrately add a leading dot (by
+    // So no need to remove it. In fact, we deliberately add a leading dot (by
     // ExpressionCompleter) to disambiguate element name from label reference
     // in subname path.
     //
