@@ -67,6 +67,8 @@ WidgetFactorySupplier::WidgetFactorySupplier()
     //
     //
     new PrefPageProducer<DlgGeneralImp>            ( QT_TRANSLATE_NOOP("QObject","General") );
+    DlgGeneralImp::attachObserver();
+
   //new PrefPageProducer<DlgOnlineHelpImp>         ( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgSettingsDocumentImp>   ( QT_TRANSLATE_NOOP("QObject","General") );
     new PrefPageProducer<DlgSettingsSelection>     ( QT_TRANSLATE_NOOP("QObject","General") );
