@@ -123,7 +123,7 @@ ViewProvider::ViewProvider()
     sPixmap = "px";
     pcModeSwitch->whichChild = _iActualMode;
 
-    setRenderCacheMode(ViewParams::instance()->getRenderCache());
+    setRenderCacheMode(ViewParams::RenderCache());
 }
 
 ViewProvider::~ViewProvider()
@@ -977,7 +977,7 @@ int ViewProvider::partialRender(const std::vector<std::string> &elements, bool c
 }
 
 bool ViewProvider::useNewSelectionModel() const {
-    return ViewParams::instance()->getUseNewSelection();
+    return ViewParams::UseNewSelection();
 }
 
 void ViewProvider::beforeDelete() {

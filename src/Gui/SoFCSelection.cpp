@@ -127,7 +127,7 @@ SoFCSelection::SoFCSelection()
 
     selected = NOTSELECTED;
 
-    useNewSelection = ViewParams::instance()->getUseNewSelection();
+    useNewSelection = ViewParams::UseNewSelection();
     selContext = std::make_shared<SelContext>();
     selContext2 = std::make_shared<SelContext>();
 }

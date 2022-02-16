@@ -173,7 +173,7 @@ void ViewProviderMeasureDistance::attach(App::DocumentObject* pcObject)
     lineSep->addChild(pLines);
     SoMarkerSet* points = new SoMarkerSet();
     points->markerIndex = Gui::Inventor::MarkerBitmaps::getMarkerIndex("CROSS",
-            ViewParams::instance()->getMarkerSize());
+            ViewParams::MarkerSize());
     points->numPoints=2;
     lineSep->addChild(points);
 
@@ -296,7 +296,7 @@ ViewProviderPointMarker::ViewProviderPointMarker()
     pCoords->point.setNum(0);
     pMarker = new SoMarkerSet();
     pMarker->markerIndex = Gui::Inventor::MarkerBitmaps::getMarkerIndex("CROSS",
-            ViewParams::instance()->getMarkerSize());
+            ViewParams::MarkerSize());
     pMarker->numPoints=0;
     pMarker->ref();
 

@@ -306,7 +306,7 @@ void PropertyView::slotActiveDocument(const Gui::Document &doc)
 }
 
 void PropertyView::checkEnable(const char *doc) {
-    if(ViewParams::instance()->getEnablePropertyViewForInactiveDocument()) {
+    if(ViewParams::EnablePropertyViewForInactiveDocument()) {
         setEnabled(true);
         return;
     }
