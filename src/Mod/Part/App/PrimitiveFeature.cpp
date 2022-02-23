@@ -39,6 +39,7 @@
 # include <BRepBuilderAPI_MakeSolid.hxx>
 # include <BRepBuilderAPI_MakePolygon.hxx>
 # include <BRepBuilderAPI_GTransform.hxx>
+# include <ShapeUpgrade_ShapeDivideClosed.hxx>
 # include <BRepProj_Projection.hxx>
 # include <gp_Circ.hxx>
 # include <gp_Elips.hxx>
@@ -461,6 +462,8 @@ App::DocumentObjectExecReturn *Ellipsoid::execute(void)
                                         Angle1.getValue()/180.0f*M_PI,
                                         Angle2.getValue()/180.0f*M_PI,
                                         Angle3.getValue()/180.0f*M_PI);
+        ShapeUpgrade_ShapeDivideClosed SDC(mkSphere.Shape());
+        SDC.Perform();
         Standard_Real scaleX = 1.0;
         Standard_Real scaleZ = Radius1.getValue()/Radius2.getValue();
         // issue #1798: A third radius has been introduced. To be backward
@@ -479,7 +482,7 @@ App::DocumentObjectExecReturn *Ellipsoid::execute(void)
         mat.SetValue(1,3,0.0);
         mat.SetValue(2,3,0.0);
         mat.SetValue(3,3,scaleZ);
-        BRepBuilderAPI_GTransform mkTrsf(mkSphere.Shape(), mat);
+        BRepBuilderAPI_GTransform mkTrsf(SDC.Result(), mat);
         TopoDS_Shape ResultShape = mkTrsf.Shape();
         this->Shape.setValue(ResultShape,false);
     }

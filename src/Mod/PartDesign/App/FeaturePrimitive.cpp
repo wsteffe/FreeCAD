@@ -33,6 +33,7 @@
 # include <BRepPrimAPI_MakeCone.hxx>
 # include <BRepPrimAPI_MakeTorus.hxx>
 # include <BRepPrimAPI_MakePrism.hxx>
+# include <ShapeUpgrade_ShapeDivideClosed.hxx>
 # include <BRepPrim_Cylinder.hxx>
 # include <BRepBuilderAPI_MakePolygon.hxx>
 # include <BRepBuilderAPI_MakeFace.hxx>
@@ -437,6 +438,8 @@ App::DocumentObjectExecReturn* Ellipsoid::execute(void)
                                         Base::toRadians<double>(Angle1.getValue()),
                                         Base::toRadians<double>(Angle2.getValue()),
                                         Base::toRadians<double>(Angle3.getValue()));
+        ShapeUpgrade_ShapeDivideClosed SDC(mkSphere.Shape());
+        SDC.Perform();
         Standard_Real scaleX = 1.0;
         Standard_Real scaleZ = Radius1.getValue()/Radius2.getValue();
         // issue #1798: A third radius has been introduced. To be backward
@@ -455,7 +458,8 @@ App::DocumentObjectExecReturn* Ellipsoid::execute(void)
         mat.SetValue(1,3,0.0);
         mat.SetValue(2,3,0.0);
         mat.SetValue(3,3,scaleZ);
-        BRepBuilderAPI_GTransform mkTrsf(mkSphere.Shape(), mat);
+        BRepBuilderAPI_GTransform mkTrsf(SDC.Result(), mat);
+
         return FeaturePrimitive::execute(mkTrsf.Shape());
     }
     catch (Standard_Failure& e) {
