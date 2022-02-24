@@ -32,6 +32,7 @@
 # include <BRepBuilderAPI_MakeFace.hxx>
 # include <BRepBuilderAPI_MakeEdge.hxx>
 # include <BRepFeat_MakePrism.hxx>
+# include <ShapeUpgrade_ShapeDivideClosed.hxx>
 # include <BRepLProp_SLProps.hxx>
 # include <BRepPrimAPI_MakeHalfSpace.hxx>
 # include <Geom_Surface.hxx>
@@ -358,6 +359,10 @@ App::DocumentObjectExecReturn *Pad::_execute(bool makeface, bool fuse)
         
         // set the additive shape property for later usage in e.g. pattern
         prism = refineShapeIfActive(prism);
+	ShapeUpgrade_ShapeDivideClosed SDC(prism.getShape());
+        SDC.Perform();
+	prism=SDC.Result();
+
         this->AddSubShape.setValue(prism);
         if (isRecomputePaused())
             return App::DocumentObject::StdReturn;

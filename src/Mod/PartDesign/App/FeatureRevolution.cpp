@@ -27,6 +27,7 @@
 # include <BRepBndLib.hxx>
 # include <BRepPrimAPI_MakeRevol.hxx>
 # include <BRepBuilderAPI_MakeFace.hxx>
+# include <ShapeUpgrade_ShapeDivideClosed.hxx>
 # include <TopoDS.hxx>
 # include <TopoDS_Face.hxx>
 # include <TopoDS_Wire.hxx>
@@ -152,6 +153,9 @@ App::DocumentObjectExecReturn *Revolution::execute(void)
         try {
             result.makERevolve(sketchshape,gp_Ax1(pnt, dir), angle);
             result = refineShapeIfActive(result);
+	    ShapeUpgrade_ShapeDivideClosed SDC(result.getShape());
+            SDC.Perform();
+	    result=SDC.Result();
         }catch(Standard_Failure &) {
             return new App::DocumentObjectExecReturn("Could not revolve the sketch!");
         }
