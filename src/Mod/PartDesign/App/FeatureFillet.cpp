@@ -34,6 +34,8 @@
 # include <BRep_Tool.hxx>
 # include <ShapeFix_Shape.hxx>
 # include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeUpgrade_ShapeDivideClosed.hxx>
+#include <ShapeBuild_ReShape.hxx>
 #endif
 
 #include <Base/Console.h>
@@ -82,6 +84,79 @@ App::DocumentObjectExecReturn *Fillet::execute(void)
 
     double radius = Radius.getValue();
 
+    auto faces = getFaces(baseShape);
+    TopoDS_Shape baseSh=baseShape.getShape();
+    ShapeUpgrade_ShapeDivideClosed SDC(baseSh);
+    SDC.Perform();
+    if(!SDC.Result().IsEqual(baseSh)){
+      TopoDS_Shape splitSh=SDC.Result();
+      Handle(ShapeBuild_ReShape) SDC_context=SDC.GetContext();
+      std::vector<TopoShape> _edges;
+      for  (long i=0; i<edges.size(); i++){
+	    TopoDS_Shape oldSh=edges[i].getShape();
+	    TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	    if(newSh.IsEqual(oldSh)) _edges.push_back(edges[i]);
+	    else for (TopExp_Explorer exp(newSh,TopAbs_EDGE); exp.More(); exp.Next()){
+	     TopoShape e; e.setShape(exp.Current()); _edges.push_back(e);
+	    }
+      }
+      edges=_edges;
+      std::vector<TopoShape> addedShapes;
+      std::vector<TopoShape> removedShapes;
+      for (TopExp_Explorer exp(baseSh,TopAbs_EDGE); exp.More(); exp.Next()){
+	  TopoDS_Shape oldSh=exp.Current();
+	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	  if(!newSh.IsEqual(oldSh)){
+            for (TopExp_Explorer exp1(newSh,TopAbs_EDGE); exp1.More(); exp1.Next())  addedShapes.push_back(TopoShape(exp1.Current()));
+	    removedShapes.push_back(TopoShape(oldSh));
+	  }
+      }
+/*
+*/
+      std::vector< std::pair<TopoShape,TopoShape> > replacedShapes;
+      for (TopExp_Explorer exp(baseSh,TopAbs_EDGE); exp.More(); exp.Next()){
+	  TopoDS_Shape oldSh=exp.Current();
+	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	  if(!newSh.IsEqual(oldSh)){
+            for (TopExp_Explorer exp1(newSh,TopAbs_EDGE); exp1.More(); exp1.Next()) addedShapes.push_back(TopoShape(exp1.Current()));
+	    removedShapes.push_back(TopoShape(oldSh));
+	  }
+      }
+      for (TopExp_Explorer exp(baseSh,TopAbs_WIRE); exp.More(); exp.Next()){
+	  TopoDS_Shape oldSh=exp.Current();
+	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	  if(!newSh.IsEqual(oldSh)){
+            for (TopExp_Explorer exp1(newSh,TopAbs_WIRE); exp1.More(); exp1.Next()) addedShapes.push_back(TopoShape(exp1.Current()));
+	    removedShapes.push_back(TopoShape(oldSh));
+	  }
+      }
+      for (TopExp_Explorer exp(baseSh,TopAbs_FACE); exp.More(); exp.Next()){
+	  TopoDS_Shape oldSh=exp.Current();
+	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	  if(!newSh.IsEqual(oldSh)){
+            for (TopExp_Explorer exp1(newSh,TopAbs_FACE); exp1.More(); exp1.Next()) addedShapes.push_back(TopoShape(exp1.Current()));
+	    removedShapes.push_back(TopoShape(oldSh));
+	  }
+      }
+      for (TopExp_Explorer exp(baseSh,TopAbs_SHELL); exp.More(); exp.Next()){
+	  TopoDS_Shape oldSh=exp.Current();
+	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	  if(!newSh.IsEqual(oldSh)){
+              replacedShapes.push_back(std::pair<TopoShape,TopoShape>(TopoShape(oldSh),TopoShape(newSh)));
+	  }
+      }
+      for (TopExp_Explorer exp(baseSh,TopAbs_SOLID); exp.More(); exp.Next()){
+	  TopoDS_Shape oldSh=exp.Current();
+	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
+	  if(!newSh.IsEqual(oldSh)){
+              replacedShapes.push_back(std::pair<TopoShape,TopoShape>(TopoShape(oldSh),TopoShape(newSh)));
+	  }
+      }
+      baseShape=baseShape.replacEShape(replacedShapes);
+      baseShape=baseShape.removEShape(removedShapes);
+      baseShape.mapSubElement(addedShapes,"FLT");
+    }
+
     if(radius <= 0)
         return new App::DocumentObjectExecReturn("Fillet radius must be greater than zero");
 
@@ -89,7 +164,8 @@ App::DocumentObjectExecReturn *Fillet::execute(void)
 
     try {
         TopoShape shape(0,getDocument()->getStringHasher());
-        shape.makEFillet(baseShape,edges,radius,radius);
+//        shape.makEFillet(baseShape,edges,radius,radius);
+        shape=baseShape;
         if (shape.isNull())
             return new App::DocumentObjectExecReturn("Resulting shape is null");
 
