@@ -45,6 +45,7 @@
 #include <Mod/Part/App/TopoShape.h>
 
 #include "FeatureFillet.h"
+#include "assert.h"
 
 
 using namespace PartDesign;
@@ -89,6 +90,8 @@ App::DocumentObjectExecReturn *Fillet::execute(void)
     ShapeUpgrade_ShapeDivideClosed SDC(baseSh);
     SDC.Perform();
     if(!SDC.Result().IsEqual(baseSh)){
+      std::vector<TopoShape> addedShapes;
+      TopTools_MapOfShape addedEdges;
       TopoDS_Shape splitSh=SDC.Result();
       Handle(ShapeBuild_ReShape) SDC_context=SDC.GetContext();
       std::vector<TopoShape> _edges;
@@ -97,28 +100,22 @@ App::DocumentObjectExecReturn *Fillet::execute(void)
 	    TopoDS_Shape newSh=SDC_context->Apply(oldSh);
 	    if(newSh.IsEqual(oldSh)) _edges.push_back(edges[i]);
 	    else for (TopExp_Explorer exp(newSh,TopAbs_EDGE); exp.More(); exp.Next()){
-	     TopoShape e; e.setShape(exp.Current()); _edges.push_back(e);
+	     TopoShape e(exp.Current()); 
+	     _edges.push_back(e);
+	     addedShapes.push_back(e);
+             addedEdges.Add(exp.Current());
 	    }
       }
       edges=_edges;
-      std::vector<TopoShape> addedShapes;
       std::vector<TopoShape> removedShapes;
       for (TopExp_Explorer exp(baseSh,TopAbs_EDGE); exp.More(); exp.Next()){
 	  TopoDS_Shape oldSh=exp.Current();
 	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
 	  if(!newSh.IsEqual(oldSh)){
-            for (TopExp_Explorer exp1(newSh,TopAbs_EDGE); exp1.More(); exp1.Next())  addedShapes.push_back(TopoShape(exp1.Current()));
-	    removedShapes.push_back(TopoShape(oldSh));
-	  }
-      }
-/*
-*/
-      std::vector< std::pair<TopoShape,TopoShape> > replacedShapes;
-      for (TopExp_Explorer exp(baseSh,TopAbs_EDGE); exp.More(); exp.Next()){
-	  TopoDS_Shape oldSh=exp.Current();
-	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
-	  if(!newSh.IsEqual(oldSh)){
-            for (TopExp_Explorer exp1(newSh,TopAbs_EDGE); exp1.More(); exp1.Next()) addedShapes.push_back(TopoShape(exp1.Current()));
+            for (TopExp_Explorer exp1(newSh,TopAbs_EDGE); exp1.More(); exp1.Next()){
+	      TopoShape e(exp1.Current()); 
+	      if(!addedEdges.Contains(exp1.Current())) addedShapes.push_back(TopoShape(exp1.Current()));
+	    }
 	    removedShapes.push_back(TopoShape(oldSh));
 	  }
       }
@@ -138,6 +135,7 @@ App::DocumentObjectExecReturn *Fillet::execute(void)
 	    removedShapes.push_back(TopoShape(oldSh));
 	  }
       }
+      std::vector< std::pair<TopoShape,TopoShape> > replacedShapes;
       for (TopExp_Explorer exp(baseSh,TopAbs_SHELL); exp.More(); exp.Next()){
 	  TopoDS_Shape oldSh=exp.Current();
 	  TopoDS_Shape newSh=SDC_context->Apply(oldSh);
@@ -163,9 +161,18 @@ App::DocumentObjectExecReturn *Fillet::execute(void)
     this->positionByBaseFeature();
 
     try {
+
+       TopoDS_Shape theShape=baseShape.getShape();
+       TopTools_MapOfShape allEdges;
+       for (TopExp_Explorer exp(theShape,TopAbs_EDGE); exp.More(); exp.Next()) allEdges.Add(exp.Current());
+       for  (long i=0; i<edges.size(); i++){
+	    TopoDS_Shape edge=edges[i].getShape();
+	    assert(allEdges.Contains(edge));
+       }
+
         TopoShape shape(0,getDocument()->getStringHasher());
-//        shape.makEFillet(baseShape,edges,radius,radius);
-        shape=baseShape;
+        shape.makEFillet(baseShape,edges,radius,radius);
+//        shape=baseShape;
         if (shape.isNull())
             return new App::DocumentObjectExecReturn("Resulting shape is null");
 
