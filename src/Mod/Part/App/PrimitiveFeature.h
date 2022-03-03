@@ -166,12 +166,14 @@ public:
     App::PropertyAngle Angle1;
     App::PropertyAngle Angle2;
     App::PropertyAngle Angle3;
+    App::PropertyBool Split;
 
     /** @name methods override feature */
     //@{
     /// recalculate the feature
     App::DocumentObjectExecReturn *execute(void);
     short mustExecute() const;
+    void setupObject();
     //@}
     virtual const char* getViewProviderName(void) const {
         return "PartGui::ViewProviderEllipsoid";

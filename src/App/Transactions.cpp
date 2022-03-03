@@ -177,6 +177,7 @@ static bool _FlushingProps;
 // different objects
 static std::unordered_map<Property*, int> _PendingProps;
 static std::vector<TransactionalObject *> _PendingRemove;
+static std::set<std::string> _TransactionDocs;
 static int _PendingPropIndex;
 
 TransactionGuard::TransactionGuard(TransactionType type)
@@ -207,16 +208,6 @@ TransactionGuard::~TransactionGuard()
             return a.second < b.second;
         });
 
-    std::vector<App::Document*> docs;
-    std::set<App::Document*> docSet;
-    for(auto &v : props) {
-        auto container = v.first->getContainer();
-        if (!container) continue;
-        auto doc = container->getOwnerDocument();
-        if (doc && docSet.insert(doc).second)
-            docs.push_back(doc);
-    }
-
     std::string errMsg;
 
     for(auto &v : props) {
@@ -236,7 +227,10 @@ TransactionGuard::~TransactionGuard()
     _PendingProps.clear();
     _PendingPropIndex = 0;
 
-    for (auto doc : docs) {
+    for (auto &docName : _TransactionDocs) {
+        auto doc = GetApplication().getDocument(docName.c_str());
+        if (!doc)
+            continue;
         for(auto obj : doc->getObjects()) {
             if(obj->testStatus(ObjectStatus::PendingTransactionUpdate)) {
                 exceptionSafeCall(errMsg,
@@ -257,7 +251,10 @@ TransactionGuard::~TransactionGuard()
 
     switch (transactionType) {
     case Undo:
-        for (auto doc : docs) {
+        for (auto &docName : _TransactionDocs) {
+            auto doc = GetApplication().getDocument(docName.c_str());
+            if (!doc)
+                continue;
             exceptionSafeCall(errMsg, doc->signalUndo, *doc);
             if (errMsg.size()) {
                 FC_ERR("Exception on signal undo " << doc->getName() << ": " << errMsg);
@@ -271,7 +268,10 @@ TransactionGuard::~TransactionGuard()
         }
         break;
     case Redo:
-        for (auto doc : docs) {
+        for (auto &docName : _TransactionDocs) {
+            auto doc = GetApplication().getDocument(docName.c_str());
+            if (!doc)
+                continue;
             exceptionSafeCall(errMsg, doc->signalRedo, *doc);
             if (errMsg.size()) {
                 FC_ERR("Exception on signal redo " << doc->getName() << ": " << errMsg);
@@ -287,6 +287,7 @@ TransactionGuard::~TransactionGuard()
     default:
         break;
     }
+    _TransactionDocs.clear();
 }
 
 bool TransactionGuard::addPendingRemove(TransactionalObject *obj)
@@ -333,6 +334,8 @@ void Transaction::apply(Document &Doc, bool forward)
 {
     std::string errMsg;
     try {
+        if (_TransactionActive && !_FlushingProps)
+            _TransactionDocs.insert(Doc.getName());
         auto &index = _Objects.get<0>();
         for(auto &info : index) 
             info.second->applyDel(Doc, const_cast<TransactionalObject*>(info.first));

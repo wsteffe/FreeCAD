@@ -578,6 +578,11 @@ public:
 
     virtual void refreshIcon();
 
+    /// Override shortcut of this command
+    virtual void setShortcut (const QString &);
+    /// Obtain the current shortcut of this command
+    virtual QString getShortcut() const;
+
     /** @name arbitrary helper methods */
     //@{
     void adjustCameraPosition();
@@ -657,6 +662,8 @@ public:
     Command *getCommand(int idx) const;
 
     virtual void refreshIcon();
+
+    virtual void updateAction(int mode);
 
 protected:
     virtual void activated(int iMsg);
@@ -960,6 +967,7 @@ private:
     void clearCommands();
     std::map<std::string, Command*> _sCommands;
     std::map<std::string, std::list<std::string> > _sCommandModes;
+    std::map<std::string, int> _sCurrentCommandModes;
 
     typedef std::multimap<std::string, CallbackFunction> CallbackMap;
     CallbackMap _CallbackMap;

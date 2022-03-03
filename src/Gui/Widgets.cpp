@@ -431,7 +431,8 @@ void AccelLineEdit::keyPressEvent ( QKeyEvent * e)
         txtLine.clear();
         break;
     default:
-        txtLine += QString::fromLatin1(",");
+        if (txtLine.size())
+            txtLine += QString::fromLatin1(",");
         break;
     }
 

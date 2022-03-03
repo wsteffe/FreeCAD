@@ -6479,7 +6479,7 @@ void DocumentItem::slotOnTopObject(int reason, const App::SubObjectT &objT)
     }
 }
 
-void DocumentItem::slotChangedDocument(const App::Document &doc, const App::Property &prop)
+void DocumentItem::slotChangedDocument(const App::Document &, const App::Property &prop)
 {
     if (!prop.getName())
         return;

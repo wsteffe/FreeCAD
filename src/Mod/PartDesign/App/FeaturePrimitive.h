@@ -237,12 +237,14 @@ public:
     App::PropertyAngle Angle1;
     App::PropertyAngle Angle2;
     App::PropertyAngle Angle3;
+    App::PropertyBool Split;
     
     /** @name methods override feature */
     //@{
     /// recalculate the Feature
     App::DocumentObjectExecReturn *execute(void);
     short mustExecute() const;
+    void setupObject();
     
 protected:
     

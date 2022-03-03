@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>577</width>
-    <height>375</height>
+    <width>625</width>
+    <height>376</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,16 @@
        <property name="spacing">
         <number>6</number>
        </property>
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <item>
@@ -54,6 +63,9 @@
          <property name="rootIsDecorated">
           <bool>false</bool>
          </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
          <column>
           <property name="text">
            <string notr="true">1</string>
@@ -70,7 +82,16 @@
          <property name="spacing">
           <number>6</number>
          </property>
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -101,22 +122,68 @@
           <widget class="Gui::AccelLineEdit" name="editShortcut"/>
          </item>
          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Multi-key-shortcut delay: </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="Gui::PrefSpinBox" name="shortcutTimeout">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Time delay in miliseconds to disambiguate multi-key sequence shortcuts.
+For example, pressing 'F' twice in less than the time delay setting here will
+be treated as shorctcut key sequence 'F, F'.</string>
+             </property>
+             <property name="maximum">
+              <number>10000</number>
+             </property>
+             <property name="singleStep">
+              <number>100</number>
+             </property>
+             <property name="value">
+              <number>300</number>
+             </property>
+             <property name="prefPath" stdset="0">
+              <cstring>Shortcut/Settings</cstring>
+             </property>
+             <property name="prefEntry" stdset="0">
+              <cstring>ShortcutTimeout</cstring>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
           <widget class="QLabel" name="textLabelAssigned">
+           <property name="toolTip">
+            <string>This list shows commands having the same shortcut in the priority from hight
+to low. If more than one command with the same shortcut are active at the
+same time. The one with the highest prioirty will be triggered.</string>
+           </property>
            <property name="text">
-            <string>Currently assigned to:</string>
+            <string>Shorcut priority list:</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QTreeWidget" name="assignedTreeWidget">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
            <property name="minimumSize">
             <size>
              <width>220</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
            </property>
            <property name="rootIsDecorated">
             <bool>false</bool>
@@ -135,7 +202,16 @@
          <property name="spacing">
           <number>6</number>
          </property>
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -191,6 +267,26 @@
            </property>
           </spacer>
          </item>
+         <item>
+          <widget class="QPushButton" name="buttonUp">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Up</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonDown">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Down</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
@@ -238,6 +334,11 @@
    <class>Gui::AccelLineEdit</class>
    <extends>QLineEdit</extends>
    <header>Gui/Widgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>Gui/PrefWidgets.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

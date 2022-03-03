@@ -62,8 +62,11 @@
 # include <Standard_Version.hxx>
 #endif
 
+#include <ShapeUpgrade_ShapeDivideClosed.hxx>
+
 #include "PrimitiveFeature.h"
 #include <Mod/Part/App/PartFeaturePy.h>
+#include <Mod/Part/App/PartParams.h>
 #include <App/FeaturePythonPyImp.h>
 #include <Base/Console.h>
 #include <Base/Exception.h>
@@ -426,6 +429,7 @@ Ellipsoid::Ellipsoid(void)
     Angle2.setConstraints(&angleRangeV);
     ADD_PROPERTY_TYPE(Angle3,(360.0f),"Ellipsoid",App::Prop_None,"The angle of the ellipsoid");
     Angle3.setConstraints(&angleRangeU);
+    ADD_PROPERTY_TYPE(Split,(false),"Ellipsoid",App::Prop_None,"Split the ellisoid in the middle to avoid potential error on subsequent boolean operation.");
 }
 
 short Ellipsoid::mustExecute() const
@@ -443,6 +447,12 @@ short Ellipsoid::mustExecute() const
     if (Angle3.isTouched())
         return 1;
     return Primitive::mustExecute();
+}
+
+void Ellipsoid::setupObject()
+{
+    Split.setValue(PartParams::SplitEllipsoid());
+    Primitive::setupObject();
 }
 
 App::DocumentObjectExecReturn *Ellipsoid::execute(void)
@@ -482,8 +492,17 @@ App::DocumentObjectExecReturn *Ellipsoid::execute(void)
         mat.SetValue(1,3,0.0);
         mat.SetValue(2,3,0.0);
         mat.SetValue(3,3,scaleZ);
-        BRepBuilderAPI_GTransform mkTrsf(SDC.Result(), mat);
-        TopoDS_Shape ResultShape = mkTrsf.Shape();
+        TopoDS_Shape ResultShape;
+        if (Split.getValue()) {
+            ShapeUpgrade_ShapeDivideClosed SDC(mkSphere.Shape());
+            SDC.Perform();
+            BRepBuilderAPI_GTransform mkTrsf(SDC.Result(), mat);
+            ResultShape = mkTrsf.Shape();
+        }
+        else {
+            BRepBuilderAPI_GTransform mkTrsf(mkSphere.Shape(), mat);
+            ResultShape = mkTrsf.Shape();
+        }
         this->Shape.setValue(ResultShape,false);
     }
     catch (Standard_Failure& e) {

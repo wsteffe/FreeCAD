@@ -20,32 +20,6 @@
       <string>Model settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="5" column="0">
-       <widget class="Gui::PrefCheckBox" name="checkAutoGroupSolids">
-        <property name="text">
-         <string>Auto group solids in Body</string>
-        </property>
-        <property name="prefPath" stdset="0">
-         <cstring>Mod/Part</cstring>
-        </property>
-        <property name="prefEntry" stdset="0">
-         <cstring>AutoGroupSolids</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="Gui::PrefCheckBox" name="checkSingleSolid">
-        <property name="text">
-         <string>Enforce single solid in Body</string>
-        </property>
-        <property name="prefEntry" stdset="0">
-         <cstring>SingleSolid</cstring>
-        </property>
-        <property name="prefPath" stdset="0">
-         <cstring>Mod/Part</cstring>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="0">
        <widget class="Gui::PrefCheckBox" name="checkLinearize">
         <property name="toolTip">
@@ -64,6 +38,56 @@ in Part workbench, and equivalent features in PartDesign.</string>
         </property>
         <property name="prefEntry" stdset="0">
          <cstring>LinearizeExtrusionDraft</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="Gui::PrefCheckBox" name="checkBoxAuxGroup">
+          <property name="toolTip">
+           <string>Disable this option to not enforce unique lable in auxillary groups.
+So instead of having 'Datums001' etc., all datum group can be
+labeled as 'Datums'.
+
+Note that this option does not apply to user created auxillary
+groups, neither does the option affects any user defined label of
+existing auxillary groups.</string>
+          </property>
+          <property name="text">
+           <string>Use unique label for auxillary groups in Body</string>
+          </property>
+          <property name="prefEntry" stdset="0">
+           <cstring>AuxGroupUniqueLabel</cstring>
+          </property>
+          <property name="prefPath" stdset="0">
+           <cstring>Mod/Part</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnAuxGroup">
+          <property name="toolTip">
+           <string>Apply the 'fixed name' option to existing auxillary groups.
+it only applies to auto created group with their original labels.</string>
+          </property>
+          <property name="text">
+           <string>Apply to existing groups</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="6" column="0">
+       <widget class="Gui::PrefCheckBox" name="checkAutoGroupSolids">
+        <property name="text">
+         <string>Auto group solids in Body</string>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/Part</cstring>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>AutoGroupSolids</cstring>
         </property>
        </widget>
       </item>
@@ -106,42 +130,34 @@ in Part workbench, and equivalent features in PartDesign.</string>
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="Gui::PrefCheckBox" name="checkBoxAuxGroup">
-          <property name="toolTip">
-           <string>Disable this option to not enforce unique lable in auxillary groups.
-So instead of having 'Datums001' etc., all datum group can be
-labeled as 'Datums'.
-
-Note that this option does not apply to user created auxillary
-groups, neither does the option affects any user defined label of
-existing auxillary groups.</string>
-          </property>
-          <property name="text">
-           <string>Use unique label for auxillary groups in Body</string>
-          </property>
-          <property name="prefEntry" stdset="0">
-           <cstring>AuxGroupUniqueLabel</cstring>
-          </property>
-          <property name="prefPath" stdset="0">
-           <cstring>Mod/Part</cstring>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btnAuxGroup">
-          <property name="toolTip">
-           <string>Apply the 'fixed name' option to existing auxillary groups.
-it only applies to auto created group with their original labels.</string>
-          </property>
-          <property name="text">
-           <string>Apply to existing groups</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+      <item row="5" column="0">
+       <widget class="Gui::PrefCheckBox" name="checkSingleSolid">
+        <property name="text">
+         <string>Enforce single solid in Body</string>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>SingleSolid</cstring>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/Part</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="Gui::PrefCheckBox" name="checkSplitEllipsoid">
+        <property name="text">
+         <string>Split ellipsoid</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/Part</cstring>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>SplitEllipsoid</cstring>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

@@ -24,8 +24,11 @@
 #ifndef GUI_DIALOG_DLGKEYBOARD_IMP_H
 #define GUI_DIALOG_DLGKEYBOARD_IMP_H
 
-#include "PropertyPage.h"
 #include <memory>
+#include <QTimer>
+#include <QPointer>
+#include <QAction>
+#include "PropertyPage.h"
 
 class QTreeWidgetItem;
 
@@ -57,24 +60,32 @@ protected:
 protected Q_SLOTS:
     void on_categoryBox_activated(int index);
     void on_commandTreeWidget_currentItemChanged(QTreeWidgetItem*);
+    void on_assignedTreeWidget_currentItemChanged(QTreeWidgetItem*);
     void on_buttonAssign_clicked();
     void on_buttonClear_clicked();
     void on_buttonReset_clicked();
     void on_buttonResetAll_clicked();
+    void on_buttonUp_clicked();
+    void on_buttonDown_clicked();
     void on_editShortcut_textChanged(const QString&);
     void onAddMacroAction(const QByteArray&);
     void onRemoveMacroAction(const QByteArray&);
     void onModifyMacroAction(const QByteArray&);
     void onCommandActivated(const QByteArray&);
+    void onTimer();
 
 protected:
     void changeEvent(QEvent *e);
     void setShortcutOfCurrentAction(const QString&);
+    void populateCategories();
+    void populatePriorityList();
+    void onUpdatePriorityList(bool up);
 
 private:
     std::unique_ptr<Ui_DlgCustomKeyboard> ui;
     std::unique_ptr<Gui::PrefWidgetStates> widgetStates;
     bool firstShow;
+    QTimer timer;
 };
 
 } // namespace Dialog

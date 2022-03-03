@@ -73,6 +73,7 @@ public:
     void setCheckable(bool);
     void setChecked (bool, bool no_signal=false);
     bool isChecked() const;
+    bool isEnabled() const;
 
     void setShortcut (const QString &);
     QKeySequence shortcut() const;
@@ -116,6 +117,10 @@ public:
                                  const QFont &font,
                                  const QString &shortcut,
                                  Action *action = nullptr);
+
+    Command *command() const {
+        return _pcCmd;
+    }
 
 public Q_SLOTS:
     virtual void onActivated ();
