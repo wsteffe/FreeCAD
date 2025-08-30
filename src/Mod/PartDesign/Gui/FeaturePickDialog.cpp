@@ -43,7 +43,7 @@ const QString FeaturePickDialog::getFeatureStatusString(const featureStatus st)
         case invalidShape: return tr("Invalid shape");
         case noWire: return tr("No wire in sketch");
         case isUsed: return tr("Sketch already used by other feature");
-        case otherBody: return tr("Sketch belongs to another body feature");
+        case otherBody: return tr("Valid");
         case basePlane: return tr("Base plane");
         case afterTip: return tr("Feature is located after the tip of the body");
     }
@@ -104,7 +104,7 @@ void FeaturePickDialog::updateList()
             case invalidShape: item->setFlags(Qt::NoItemFlags); break;
             case noWire: item->setFlags(Qt::NoItemFlags); break;
             case isUsed: item->setFlags(ui->checkOtherFeature->isChecked() ? Qt::ItemIsSelectable | Qt::ItemIsEnabled : Qt::NoItemFlags); break;
-            case otherBody: item->setFlags(ui->checkOtherBody->isChecked() ? Qt::ItemIsSelectable | Qt::ItemIsEnabled : Qt::NoItemFlags); break;
+            case otherBody: item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled); break;
             case basePlane: item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled); break;
             case afterTip: item->setFlags(Qt::NoItemFlags); break;
         }
