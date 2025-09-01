@@ -386,7 +386,7 @@ public:
 
     void findDatumPlanes()
     {
-        App::GeoFeatureGroupExtension *geoGroup = getGroupExtensionOfBody();
+        App::GroupExtension *geoGroup = getGroupExtensionOfBody();
         const std::vector<Base::Type> types = { PartDesign::Plane::getClassTypeId(), App::Plane::getClassTypeId() };
         auto datumPlanes = appdocument->getObjectsOfType(types);
 
@@ -408,14 +408,14 @@ public:
                 PartDesign::Body *planeBody = PartDesign::Body::findBodyOf (plane);
                 if ( planeBody ) {
                     if ( ( geoGroup && geoGroup->hasObject ( planeBody, true ) ) ||
-                           !App::GeoFeatureGroupExtension::getGroupOfObject (planeBody) ) {
+                           !App::GroupExtension::getGroupOfObject (planeBody) ) {
                         status.push_back ( PartDesignGui::TaskFeaturePick::otherBody );
                     } else {
                         status.push_back ( PartDesignGui::TaskFeaturePick::otherPart );
                     }
                 } else {
                     if ( ( geoGroup && geoGroup->hasObject ( plane, true ) ) ||
-                           !App::GeoFeatureGroupExtension::getGroupOfObject ( plane ) ) {
+                           !App::GroupExtension::getGroupOfObject ( plane ) ) {
                         status.push_back ( PartDesignGui::TaskFeaturePick::otherPart );
                     } else {
                         status.push_back ( PartDesignGui::TaskFeaturePick::notInBody );
@@ -458,13 +458,13 @@ private:
         }
     }
 
-    App::GeoFeatureGroupExtension* getGroupExtensionOfBody() const
+    App::GroupExtension* getGroupExtensionOfBody() const
     {
-        App::GeoFeatureGroupExtension *geoGroup{nullptr};
+        App::GroupExtension *geoGroup{nullptr};
         if (activeBody) {
-            auto group( App::GeoFeatureGroupExtension::getGroupOfObject(activeBody) );
+            auto group( App::GroupExtension::getGroupOfObject(activeBody) );
             if (group) {
-                geoGroup = group->getExtensionByType<App::GeoFeatureGroupExtension>();
+                geoGroup = group->getExtensionByType<App::GroupExtension>();
             }
         }
 

@@ -39,7 +39,7 @@ BodyBase::BodyBase()
 
     ADD_PROPERTY(BaseFeature , (nullptr) );
 
-    App::GeoFeatureGroupExtension::initExtension(this);
+    App::GroupExtension::initExtension(this);
 
 }
 
