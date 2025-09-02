@@ -69,7 +69,7 @@ ViewProviderBody::ViewProviderBody()
 
     sPixmap = "PartDesign_Body.svg";
 
-    Gui::ViewProviderGroupExtension::initExtension(this);
+    Gui::ViewProviderBodyGroupExtension::initExtension(this);
 }
 
 ViewProviderBody::~ViewProviderBody()

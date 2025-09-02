@@ -115,6 +115,7 @@
 #include "ViewProviderGeometryObjectPy.h"
 #include "ViewProviderGroupExtension.h"
 #include "ViewProviderSuppressibleExtension.h"
+#include "ViewProviderBodyGroupExtension.h"
 #include "ViewProviderImagePlane.h"
 #include "ViewProviderInventorObject.h"
 #include "ViewProviderLine.h"
@@ -2180,6 +2181,8 @@ void Application::initTypes()
     Gui::ViewProviderGroupExtensionPython       ::init();
     Gui::ViewProviderGeoFeatureGroupExtension   ::init();
     Gui::ViewProviderGeoFeatureGroupExtensionPython::init();
+    Gui::ViewProviderBodyGroupExtension         ::init();
+    Gui::ViewProviderBodyGroupExtensionPython   ::init();
     Gui::ViewProviderOriginGroupExtension       ::init();
     Gui::ViewProviderOriginGroupExtensionPython ::init();
     Gui::ViewProviderSuppressibleExtension      ::init();

@@ -208,7 +208,7 @@ void TaskFeaturePick::updateList()
                 item->setHidden(!ui->checkOtherPart->isChecked());
                 break;
             case notInBody:
-                item->setHidden(false);
+                item->setHidden(!ui->checkOtherPart->isChecked());
                 break;
             case basePlane:
                 item->setHidden(false);

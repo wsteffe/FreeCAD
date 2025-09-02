@@ -519,7 +519,7 @@ void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
 
     // no cross CS link for local links.
     auto result = getScopedObjectsFromLinks(obj, LinkScope::Local);
-    auto group = obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
+    auto group = obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId(), false)
         ? obj
         : getGroupOfObject(obj);
     for (auto link : result) {
