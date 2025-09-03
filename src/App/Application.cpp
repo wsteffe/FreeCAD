@@ -2569,12 +2569,12 @@ void Application::initConfig(int argc, char ** argv)
         mConfig["KeepDeprecatedPaths"] = "1";
     }
 
+    if (vm.contains("safe-mode")) {
+        mConfig["SafeMode"] = "1";
+    }
+
     // extract home paths
     _appDirs = std::make_unique<ApplicationDirectories>(mConfig);
-
-    if (vm.contains("safe-mode")) {
-        SafeMode::StartSafeMode();
-    }
 
 #   ifdef FC_DEBUG
     mConfig["Debug"] = "1";
@@ -3781,6 +3781,9 @@ void Application::getVerboseAddOnsInfo(QTextStream& str, const std::map<std::str
     bool firstMod = true;
     if (fs::exists(modDir) && fs::is_directory(modDir)) {
         for (const auto& mod : fs::directory_iterator(modDir)) {
+            if (!fs::is_directory(mod)) {
+                continue; // Ignore files, only show directories
+            }
             auto dirName = mod.path().string();
             addModuleInfo(str, QString::fromStdString(dirName), firstMod);
         }
