@@ -110,6 +110,9 @@ SET(Module_SRCS
     PreCompiled.h
     Measure.cpp
     Measure.h
+    PartDesignMigration.cpp
+    PartDesignMigration.h
+    PartDesignRestoreHook.cpp
 )
 SOURCE_GROUP("Module" FILES ${Module_SRCS})
 
