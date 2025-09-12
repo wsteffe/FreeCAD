@@ -546,7 +546,6 @@ void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
         }
 
     }
-
 }
 
 bool GeoFeatureGroupExtension::extensionGetSubObjects(std::vector<std::string>& ret, int) const
