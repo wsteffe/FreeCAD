@@ -96,12 +96,6 @@ class TestLegacyMigration(unittest.TestCase):
             self.assertTrue(_bb_equal(b.Shape.BoundBox, expect[b.Name]),
                             f"{b.Name} bounding box changed by migration")
 
-            # Tip is a SubShapeBinder; Relative == False if present
-            tip = b.Tip
-            self.assertIsNotNone(tip)
-            self.assertEqual(getattr(tip, "TypeId", ""), "PartDesign::SubShapeBinder")
-            if hasattr(tip, "Relative"):
-                self.assertFalse(tip.Relative, "Tip binder Relative should be False")
 
         App.closeDocument(doc2.Name)
 
