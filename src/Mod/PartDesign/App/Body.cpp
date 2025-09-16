@@ -23,12 +23,7 @@
 
 #include "PreCompiled.h"
 
-#include "PartDesignMigration.h"
-#include <App/Application.h>
-#include <unordered_set>
-
 #include <App/Document.h>
-#include <App/Part.h>
 #include <App/VarSet.h>
 #include <App/Origin.h>
 #include <Base/Placement.h>
@@ -582,26 +577,6 @@ App::DocumentObject *Body::getSubObject(const char *subname,
 #endif
 }
 
-namespace {
-    static std::unordered_set<App::Document*> s_migrationHooked;
-}
-
-bool anyLegacyBodyPlacement(App::Document* doc)
-{
-    if (!doc) return false;
-
-    // --- gather bodies
-    std::vector<PartDesign::Body*> bodies;
-    for (auto* o : doc->getObjectsOfType(PartDesign::Body::getClassTypeId()))
-        if (auto* b = dynamic_cast<PartDesign::Body*>(o))
-            bodies.push_back(b);
-    if (bodies.empty()) return false;
-    for (auto* b : bodies) {
-        if (!b->Placement.getValue().isIdentity()) return true;
-    }
-    return false;
-}
-
 void Body::onDocumentRestored()
 {
     for(auto obj : Group.getValues()) {
@@ -621,17 +596,6 @@ void Body::onDocumentRestored()
 	auto* origin = this->getOrigin();
         origin->Placement.setStatus(App::Property::Hidden, false);
         origin->Placement.setStatus(App::Property::ReadOnly, false);
-    }
-
-    // Defer migration until the document has finished restoring
-    App::Document* doc = getDocument();
-    if (doc && s_migrationHooked.insert(doc).second) {
-        App::GetApplication().signalFinishRestoreDocument.connect(
-            [doc](const App::Document& done) {
-                if (&done != doc) return;
-                PartDesign::migrateLegacyBodyPlacements(const_cast<App::Document*>(&done));
-            }
-        );
     }
 
     DocumentObject::onDocumentRestored();
