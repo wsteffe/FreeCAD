@@ -22,7 +22,6 @@
  ***************************************************************************/
 
 #include <App/Document.h>
-#include <Mod/PartDesign/App/Body.h>
 #include <Base/Tools.h>
 
 #include "GeoFeatureGroupExtension.h"
