@@ -745,6 +745,13 @@ void Application::open(const char* FileName, const char* Module)
                                        "FreeCAD.openDocument('%s')",
                                        unicodepath.c_str());
                     Gui::Application::checkForRecomputes();
+                    Command::doCommand(
+                        Gui::Command::App,
+                        "import FreeCAD as App\n"
+                        "import PartDesign\n"
+                        "if App.ActiveDocument is not None:\n"
+                        "    PartDesign.resetBodiesPlacements(App.ActiveDocument)\n"
+                    );
                 }
             }
             else {
