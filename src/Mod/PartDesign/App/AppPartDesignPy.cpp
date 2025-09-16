@@ -27,7 +27,7 @@
 #include <Base/VectorPy.h>
 #include <Base/Tools.h>
 #include <App/DocumentPy.h>
-#include "PartDesignMigration.h"
+#include "ResetBodyPlacement.h"
 
 
 namespace PartDesign {
