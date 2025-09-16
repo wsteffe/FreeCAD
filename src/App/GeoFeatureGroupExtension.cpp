@@ -22,7 +22,7 @@
  ***************************************************************************/
 
 #include <App/Document.h>
-#include <App/Part.h>
+#include <Mod/PartDesign/App/Body.h>
 #include <Base/Tools.h>
 
 #include "GeoFeatureGroupExtension.h"
@@ -30,6 +30,8 @@
 #include "Origin.h"
 #include "Datums.h"
 #include "OriginGroupExtension.h"
+
+#include <cstring> // for std::strcmp
 
 
 using namespace App;
@@ -507,6 +509,36 @@ bool GeoFeatureGroupExtension::isLinkValid(App::Property* prop)
     return true;
 }
 
+
+// Treat Body as transparent (no group boundary)
+static inline bool isBodyObject(const App::DocumentObject* obj)
+{
+    if (!obj) return false;
+    const char* tn = obj->getTypeId().getName();
+    return tn && (std::strcmp(tn, "PartDesign::Body") == 0 ||
+                  std::strcmp(tn, "Body") == 0);
+}
+
+// Return the nearest GeoFeatureGroup that is NOT a Body.
+// If 'o' is itself a non-Body GeoFeatureGroup, return 'o'.
+// If the nearest group is a Body, walk upward to its parent group.
+// Returns nullptr if no (non-Body) group exists.
+static const App::DocumentObject* nearestNonBodyGroup(const App::DocumentObject* obj)
+{
+    if (!obj) return nullptr;
+
+    const App::DocumentObject* g =
+        obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
+            ? obj
+            : App::GeoFeatureGroupExtension::getGroupOfObject(obj);
+
+    // Make Body transparent as a boundary; climb until non-Body or nullptr
+    while (g && isBodyObject(g)) {
+        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
+    }
+    return g;
+}
+
 void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
                                                      std::vector<DocumentObject*>& vec)
 {
@@ -515,36 +547,24 @@ void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
         return;
     }
 
-    // no cross CS link for local links.
+    // 1) Local links must not cross the nearest (non-Body) group boundary
     auto result = getScopedObjectsFromLinks(obj, LinkScope::Local);
-
-    const App::Part* scopePart = App::Part::getPartOfObject(obj);
-    
-    for (auto* link : result) {
-         if (!link) continue;
- 
-        // --- New: Part-based scoping takes precedence ---
-        const App::Part* linkPart = App::Part::getPartOfObject(link);
-
-        // If neither is inside a Part, allow (single global CS; cross-linking OK)
-        if (!scopePart && !linkPart) {
-            continue;
+    auto group = nearestNonBodyGroup(obj);
+    for (auto link : result) {
+        if (nearestNonBodyGroup(link) != group) {
+            vec.push_back(link);
         }
-        // If both have a nearest Part, allow only if they match
-        if (scopePart && linkPart) {
-            if (scopePart == linkPart) {
-                continue;  // same Part -> OK
-            } else {
-                vec.push_back(link);  // different Parts -> out of allowed scope
-                continue;
+    }
+
+    // for links with scope SubGroup we need to check if all features are part of subgroups
+    if (group) {
+        result = getScopedObjectsFromLinks(obj, LinkScope::Child);
+        auto groupExt = group->getExtensionByType<App::GeoFeatureGroupExtension>();
+        for (auto link : result) {
+            if (!groupExt->hasObject(link, true)) {
+                vec.push_back(link);
             }
         }
-        // If exactly one side is in a Part, consider it out-of-scope
-        if ((scopePart && !linkPart) || (!scopePart && linkPart)) {
-            vec.push_back(link);
-            continue;
-        }
-
     }
 }
 
