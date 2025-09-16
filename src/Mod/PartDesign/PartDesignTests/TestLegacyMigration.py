@@ -22,6 +22,7 @@
 
 import os, json, tempfile, unittest
 import FreeCAD as App
+import PartDesign
 
 def _bb_tuple(bb):
     return [bb.XMin, bb.YMin, bb.ZMin, bb.XMax, bb.YMax, bb.ZMax]
@@ -79,6 +80,7 @@ class TestLegacyMigration(unittest.TestCase):
 
         # --- reopen to trigger migration hook
         doc2 = App.openDocument(fcstd)
+        PartDesign.resetBodiesPlacements(doc2)
         doc2.recompute()
 
         with open(snapf, "r") as f: expect = json.load(f)
