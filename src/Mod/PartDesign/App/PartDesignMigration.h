@@ -24,9 +24,11 @@
 #pragma once
 #include <App/Document.h>
 #include <Base/Placement.h>
+#include "Body.h"
 
 namespace PartDesign {
     /// Run once per document after restoration. No-ops if there is nothing to migrate.
-    void migrateLegacyBodyPlacements(App::Document* doc);
+    void resetBodyPlacement(PartDesign::Body* body);
+    void resetBodiesPlacements(App::Document* doc);
 }
 
