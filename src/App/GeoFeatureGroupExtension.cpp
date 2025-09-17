@@ -110,6 +110,31 @@ DocumentObject* GeoFeatureGroupExtension::getGroupOfObject(const DocumentObject*
     return nullptr;
 }
 
+
+const App::DocumentObject* GeoFeatureGroupExtension::getBoundaryGroupOfObject(const App::DocumentObject* obj)
+{
+    if (!obj) return nullptr;
+
+    // nearest GeoFeatureGroup (upstream meaning)
+    const App::DocumentObject* g =
+        obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
+            ? obj
+            : App::GeoFeatureGroupExtension::getGroupOfObject(obj);
+
+    // Skip groups that opted out as a boundary (actsAsGroupBoundary == false)
+    while (g) {
+        auto* ext = g->getExtensionByType<App::GeoFeatureGroupExtension>();
+        if (!ext) break;                 // not a geofeature group (shouldn’t happen) → stop
+        if (ext->actsAsGroupBoundary())  // this one is a boundary → stop here
+            break;
+        // transparent group → climb to its parent group
+        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
+    }
+
+    return g; // may be nullptr (top level), or the nearest boundary group
+}
+
+
 Base::Placement GeoFeatureGroupExtension::globalGroupPlacement()
 {
     if (getExtendedObject()->isRecomputing()) {
@@ -518,25 +543,6 @@ static inline bool isBodyObject(const App::DocumentObject* obj)
                   std::strcmp(tn, "Body") == 0);
 }
 
-// Return the nearest GeoFeatureGroup that is NOT a Body.
-// If 'o' is itself a non-Body GeoFeatureGroup, return 'o'.
-// If the nearest group is a Body, walk upward to its parent group.
-// Returns nullptr if no (non-Body) group exists.
-static const App::DocumentObject* nearestNonBodyGroup(const App::DocumentObject* obj)
-{
-    if (!obj) return nullptr;
-
-    const App::DocumentObject* g =
-        obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
-            ? obj
-            : App::GeoFeatureGroupExtension::getGroupOfObject(obj);
-
-    // Make Body transparent as a boundary; climb until non-Body or nullptr
-    while (g && isBodyObject(g)) {
-        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
-    }
-    return g;
-}
 
 void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
                                                      std::vector<DocumentObject*>& vec)
@@ -546,11 +552,11 @@ void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
         return;
     }
 
-    // 1) Local links must not cross the nearest (non-Body) group boundary
+    // 1) Local links must not cross the nearest movable group boundary
     auto result = getScopedObjectsFromLinks(obj, LinkScope::Local);
-    auto group = nearestNonBodyGroup(obj);
+    auto group = GeoFeatureGroupExtension::getBoundaryGroupOfObject(obj);
     for (auto link : result) {
-        if (nearestNonBodyGroup(link) != group) {
+        if (GeoFeatureGroupExtension::getBoundaryGroupOfObject(link) != group) {
             vec.push_back(link);
         }
     }

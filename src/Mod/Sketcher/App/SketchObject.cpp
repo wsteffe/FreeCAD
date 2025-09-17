@@ -3994,36 +3994,6 @@ int SketchObject::join(int geoId1, Sketcher::PointPos posId1, int geoId2, Sketch
     return 0;
 }
 
-
-// Treat Body as transparent (no group boundary)
-static inline bool isBodyObject(const App::DocumentObject* obj)
-{
-    if (!obj) return false;
-    const char* tn = obj->getTypeId().getName();
-    return tn && (std::strcmp(tn, "PartDesign::Body") == 0 ||
-                  std::strcmp(tn, "Body") == 0);
-}
-
-// Return the nearest GeoFeatureGroup that is NOT a Body.
-// If 'o' is itself a non-Body GeoFeatureGroup, return 'o'.
-// If the nearest group is a Body, walk upward to its parent group.
-// Returns nullptr if no (non-Body) group exists.
-static const App::DocumentObject* nearestNonBodyGroup(const App::DocumentObject* obj)
-{
-    if (!obj) return nullptr;
-
-    const App::DocumentObject* g =
-        obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
-            ? obj
-            : App::GeoFeatureGroupExtension::getGroupOfObject(obj);
-
-    // Make Body transparent as a boundary; climb until non-Body or nullptr
-    while (g && isBodyObject(g)) {
-        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
-    }
-    return g;
-}
-
 bool SketchObject::isExternalAllowed(App::Document* pDoc, App::DocumentObject* pObj,
                                      eReasonList* rsn) const
 {
@@ -4051,8 +4021,8 @@ bool SketchObject::isExternalAllowed(App::Document* pDoc, App::DocumentObject* p
         return true;// prohibiting this reference won't remove the problem anyway...
     }
 
-    auto group_this = nearestNonBodyGroup(this);
-    auto group_obj = nearestNonBodyGroup(pObj);
+    auto group_this = App::GeoFeatureGroupExtension::getBoundaryGroupOfObject(this);
+    auto group_obj = App::GeoFeatureGroupExtension::getBoundaryGroupOfObject(pObj);
     if (group_this == group_obj) {// either in the same part, or in the root of document
         return true;
     }
