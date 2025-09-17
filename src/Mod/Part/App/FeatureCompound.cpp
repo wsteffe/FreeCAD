@@ -40,8 +40,6 @@ Compound::Compound()
 {
     ADD_PROPERTY(Links,(nullptr));
     Links.setSize(0);
-    Placement.setStatus(App::Property::Hidden, true);
-    Placement.setStatus(App::Property::ReadOnly, false);
 }
 
 Compound::~Compound() = default;
@@ -95,7 +93,4 @@ void Compound2::onDocumentRestored() {
     auto res = execute();
     delete res;
     Placement.setValue(pla);
-    // Also enforce hide & lock after deserialization (legacy docs)
-    Placement.setStatus(App::Property::Hidden, true);
-    Placement.setStatus(App::Property::ReadOnly, false);
 }
