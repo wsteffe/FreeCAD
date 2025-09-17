@@ -34,6 +34,7 @@
 #include <Gui/MainWindow.h>
 #include <Mod/PartDesign/App/Body.h>
 #include <Mod/PartDesign/App/Feature.h>
+#include <Mod/PartDesign/App/ResetBodyPlacement.h>
 #include "WorkflowManager.h"
 
 
@@ -103,6 +104,10 @@ void WorkflowManager::slotFinishRestoreDocument( const App::Document &doc ) {
         wf = Workflow::Undetermined;
     }
     dwMap[&doc] = wf;
+
+    if (auto* mdoc = App::GetApplication().getDocument(doc.getName())) {
+        PartDesign::resetBodiesPlacements(mdoc);
+    }
 }
 
 void WorkflowManager::slotDeleteDocument( const App::Document &doc ) {
