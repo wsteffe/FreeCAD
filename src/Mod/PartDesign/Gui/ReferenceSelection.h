@@ -57,7 +57,7 @@ public:
 private:
     App::OriginGroupExtension* getOriginGroupExtension() const;
     bool allowOrigin(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const;
-    bool allowDatum(App::DocumentObject* pObj) const;
+    bool allowDatum(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const;
     bool allowPartFeature(App::DocumentObject* pObj, const char* sSubName) const;
     bool isEdge(App::DocumentObject* pObj, const char* sSubName) const;
     bool isFace(App::DocumentObject* pObj, const char* sSubName) const;

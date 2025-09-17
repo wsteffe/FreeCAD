@@ -77,7 +77,7 @@ bool ReferenceSelection::allow(App::Document* pDoc, App::DocumentObject* pObj, c
     }
 
     if (pObj->isDerivedFrom<Part::Datum>()) {
-        return allowDatum(pObj);
+        return allowDatum(originGroup, pObj);
     }
 
     // The flag was used to be set. So, this block will never be treated and really doesn't make sense anyway
@@ -110,30 +110,10 @@ bool ReferenceSelection::allow(App::Document* pDoc, App::DocumentObject* pObj, c
     return false;
 }
 
-// Return the nearest GeoFeatureGroup that is NOT a Body.
-// If 'o' is itself a non-Body GeoFeatureGroup, return 'o'.
-// If the nearest group is a Body, walk upward to its parent group.
-// Returns nullptr if no (non-Body) group exists.
-static const App::DocumentObject* nearestNonBodyGroup(const App::DocumentObject* obj)
-{
-    if (!obj) return nullptr;
-
-    const App::DocumentObject* g =
-        obj->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
-            ? obj
-            : App::GeoFeatureGroupExtension::getGroupOfObject(obj);
-
-    // Make Body transparent as a boundary; climb until non-Body or nullptr
-    while (g && g->isDerivedFrom<PartDesign::Body>()) {
-        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
-    }
-    return g;
-}
-
 
 App::OriginGroupExtension* ReferenceSelection::getOriginGroupExtension() const
 {
-    auto originGroupObject = nearestNonBodyGroup(support);
+    auto originGroupObject = App::GeoFeatureGroupExtension::getBoundaryGroupOfObject(support);
     if (!originGroupObject) {// fallback to active part
         originGroupObject = PartDesignGui::getActivePart();
     }
@@ -169,9 +149,14 @@ bool ReferenceSelection::allowOrigin(App::OriginGroupExtension* originGroup, App
     return false; // The Plane/Axis doesn't fits our needs
 }
 
-bool ReferenceSelection::allowDatum(App::DocumentObject* pObj) const
+bool ReferenceSelection::allowDatum(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const
 {
 
+    if (originGroup ) {
+        if (originGroup->hasObject(pObj, true)) {
+                    return true;
+        }
+    }
     if (type.testFlag(AllowSelection::FACE) && (pObj->isDerivedFrom<PartDesign::Plane>()))
         return true;
     if (type.testFlag(AllowSelection::EDGE) && (pObj->isDerivedFrom<PartDesign::Line>()))

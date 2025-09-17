@@ -88,22 +88,6 @@ bool TaskDlgDatumParameters::reject() {
     return PartGui::TaskDlgAttacher::reject();
 }
 
-static const App::DocumentObject* nearestNonBodyGroup(const App::DocumentObject* o)
-{
-    if (!o) return nullptr;
-
-    const App::DocumentObject* g =
-        o->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
-            ? o
-            : App::GeoFeatureGroupExtension::getGroupOfObject(o);
-
-    // Make Body transparent: climb to the first non-Body geofeature group (or nullptr)
-    while (g && g->isDerivedFrom(PartDesign::Body::getClassTypeId())) {
-        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
-    }
-    return g; // nullptr == true top-level
-}
-
 
 bool TaskDlgDatumParameters::accept() {
 
@@ -137,7 +121,7 @@ bool TaskDlgDatumParameters::accept() {
     
     // Determine the “owner boundary” from the active Body, but make Body transparent.
     const App::DocumentObject* pcActiveGroupObject =
-        nearestNonBodyGroup(static_cast<const App::DocumentObject*>(pcActiveBody));
+        App::GeoFeatureGroupExtension::getBoundaryGroupOfObject(static_cast<const App::DocumentObject*>(pcActiveBody));
     auto pcActiveGroup = pcActiveGroupObject->getExtensionByType<App::OriginGroupExtension>();
 
     for (App::DocumentObject* obj : pcDatum->AttachmentSupport.getValues()) {
