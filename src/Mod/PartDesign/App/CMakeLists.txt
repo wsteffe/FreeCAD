@@ -112,6 +112,8 @@ SET(Module_SRCS
     Measure.h
     ResetBodyPlacement.cpp
     ResetBodyPlacement.h
+    UniPartCSMigrator.cpp
+    UniPartCSMigrator.h
 )
 SOURCE_GROUP("Module" FILES ${Module_SRCS})
 
