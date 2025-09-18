@@ -28,7 +28,7 @@
 
 namespace PartDesign {
     /// Run once per document after restoration. No-ops if there is nothing to migrate.
-    void resetBodyPlacement(PartDesign::Body* body);
-    void resetBodiesPlacements(App::Document* doc);
+    PartDesignExport  void resetBodyPlacement(PartDesign::Body* body);
+    PartDesignExport void resetBodiesPlacements(App::Document* doc);
 }
 

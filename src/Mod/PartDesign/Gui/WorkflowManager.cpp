@@ -30,6 +30,7 @@
 #include <App/Application.h>
 #include <App/Document.h>
 #include <Gui/Application.h>
+#include <Gui/Document.h>
 #include <Gui/Command.h>
 #include <Gui/MainWindow.h>
 #include <Mod/PartDesign/App/Body.h>
@@ -96,6 +97,20 @@ void WorkflowManager::slotNewDocument( const App::Document &doc ) {
     dwMap[&doc] = Workflow::Modern;
 }
 
+#include <Gui/Application.h>
+
+
+void resetBodiesPlacementsOnlyInGUI(const App::Document& cdoc)
+{
+    // Run only when the GUI application is actually up
+    if (!Gui::Application::Instance) return;
+    Gui::Document* guiDoc = Gui::Application::Instance->getDocument(cdoc.getName());
+    if (!guiDoc) return;
+    App::Document* doc = guiDoc->getDocument();
+    if (!doc) return;
+    PartDesign::resetBodiesPlacements(doc);
+}
+
 
 void WorkflowManager::slotFinishRestoreDocument( const App::Document &doc ) {
     Workflow wf = guessWorkflow (&doc);
@@ -105,9 +120,7 @@ void WorkflowManager::slotFinishRestoreDocument( const App::Document &doc ) {
     }
     dwMap[&doc] = wf;
 
-    if (auto* mdoc = App::GetApplication().getDocument(doc.getName())) {
-        PartDesign::resetBodiesPlacements(mdoc);
-    }
+    resetBodiesPlacementsOnlyInGUI(doc);
 }
 
 void WorkflowManager::slotDeleteDocument( const App::Document &doc ) {
