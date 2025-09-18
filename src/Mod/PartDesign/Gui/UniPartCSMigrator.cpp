@@ -24,20 +24,19 @@
 
 #include <App/Application.h>        // App::GetApplication(), signals
 #include <App/Document.h>
+//#include <Gui/Command.h>
 #include <Base/Console.h>
 
-#include "Body.h"                
-#include "ResetBodyPlacement.h"  
+#include <Mod/PartDesign/App/Body.h>
+#include <Mod/PartDesign/App/ResetBodyPlacement.h>
 
 using Base::Console;
 
-namespace PartDesign {
+using namespace PartDesignGui;
+namespace sp = std::placeholders;
 
 UniPartCSMigrator* UniPartCSMigrator::_instance = nullptr;
 
-static App::Document* getAppDocByName(const std::string& name) {
-    return App::GetApplication().getDocument(name.c_str());
-}
 
 bool UniPartCSMigrator::needsMigration(App::Document* doc)
 {
@@ -57,13 +56,18 @@ UniPartCSMigrator::UniPartCSMigrator()
     connectFinishOpenDocument =
         App::GetApplication().signalFinishOpenDocument.connect(
             std::bind(&UniPartCSMigrator::slotFinishOpenDocument, this));
+    connectFinishRestoreDocument = App::GetApplication().signalFinishRestoreDocument.connect(
+            std::bind( &UniPartCSMigrator::slotFinishRestoreDocument, this, sp::_1 ) );
 }
 
 UniPartCSMigrator::~UniPartCSMigrator()
 {
     if (connectFinishOpenDocument.connected())
         connectFinishOpenDocument.disconnect();
+    if (connectFinishRestoreDocument.connected())
+    connectFinishRestoreDocument.disconnect ();
 }
+
 
 void UniPartCSMigrator::slotFinishOpenDocument()
 {
@@ -71,18 +75,57 @@ void UniPartCSMigrator::slotFinishOpenDocument()
         if (!doc) continue;
 
         const std::string name = doc->getName();
+        if (migrated_.count(name)) continue;      // already done
 
-        // guard: run at most once per document per session
-        if (migratedDocs_.count(name))
-            continue;
+        // 1) If this doc still needs the legacy recompute, defer migration
+        if (doc->testStatus(App::Document::RecomputeOnRestore)) {
+            if (!pending_.count(name)) {
+                pending_.insert(name);
+                // store the connection somewhere so you can disconnect later
+                onRecomputedConn_[name] =
+                    doc->signalRecomputed.connect(
+                        [this, name](const App::Document& d,
+                                     const std::vector<App::DocumentObject*>& /*touched*/)
+                        {
+                            // fence: we might see multiple recomputes
+                            if (migrated_.count(name)) return;
+                
+                            // get a mutable pointer from the application
+                            if (auto* mdoc = App::GetApplication().getDocument(d.getName())) {
+                                if (needsMigration(mdoc)) {
+                                    PartDesign::resetBodiesPlacements(mdoc); // idempotent; recomputes if changed
+                                    Base::Console().message(
+                                        "[PD-Migrate] UniPartCS migrated after recompute: %s\n",
+                                        name.c_str());
+                                }
+                            }
+                
+                            migrated_.insert(name);
+                            pending_.erase(name);
+                
+                            // disconnect this per-doc recompute hook
+                            auto it = onRecomputedConn_.find(name);
+                            if (it != onRecomputedConn_.end()) {
+                                it->second.disconnect();
+                                onRecomputedConn_.erase(it);
+                            }
+                        });
+                
+                            }
+                            continue; // skip migration now; we'll do it after recompute
+                        }
 
-        migratedDocs_.insert(name);  // mark first to avoid reentrancy repeats
-
+        // 2) Otherwise, migrate immediately (normal case)
         if (needsMigration(doc)) {
-            PartDesign::resetBodiesPlacements(doc);  // idempotent; recompute only if changed
-            Console().message("[PD-Migrate] UniPartCS migrated: %s\n", name.c_str());
+            PartDesign::resetBodiesPlacements(doc);
+            Base::Console().message("[PD-Migrate] UniPartCS migrated: %s\n", name.c_str());
         }
+        migrated_.insert(name);
     }
+}
+
+
+void UniPartCSMigrator::slotFinishRestoreDocument( const App::Document &doc ) {
 }
 
 // ------- singleton lifecycle (like WorkflowManager) -------
@@ -107,5 +150,4 @@ void UniPartCSMigrator::destruct()
     }
 }
 
-} // namespace PartDesign
 

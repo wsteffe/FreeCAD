@@ -23,11 +23,12 @@
 #pragma once
 #include <boost/signals2/connection.hpp>
 #include <string>
+#include <map>
 #include <unordered_set>
 
 namespace App { class Document; }
 
-namespace PartDesign {
+namespace PartDesignGui {
 
 class UniPartCSMigrator {
 public:
@@ -41,15 +42,20 @@ private:
 
     // App::Application post-open hook (signalFinishOpenDocument is void())
     void slotFinishOpenDocument();
+    void slotFinishRestoreDocument (const App::Document& doc);
 
     // True if any PartDesign::Body has non-identity placement
     static bool needsMigration(App::Document* doc);
 
     boost::signals2::connection connectFinishOpenDocument;
+    boost::signals2::connection connectFinishRestoreDocument;
+    std::map<std::string, boost::signals2::scoped_connection> onRecomputedConn_;
+
     static UniPartCSMigrator* _instance;
 
     // one-shot guard per process session
-    std::unordered_set<std::string> migratedDocs_;
+    std::unordered_set<std::string> migrated_;
+    std::unordered_set<std::string> pending_;
 };
 
 } // namespace PartDesign
