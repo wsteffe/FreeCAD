@@ -489,7 +489,6 @@ SET(Gui_UIC_SRCS
     TaskElementColors.ui
     Dialogs/DlgObjectSelection.ui
     Dialogs/DlgAddProperty.ui
-    Dialogs/DlgAddPropertyVarSet.ui
     VectorListEditor.ui
 )
 
@@ -581,7 +580,6 @@ SET(Dialog_CPP_SRCS
     TaskElementColors.cpp
     Dialogs/DlgObjectSelection.cpp
     Dialogs/DlgAddProperty.cpp
-    Dialogs/DlgAddPropertyVarSet.cpp
     VectorListEditor.cpp
 )
 
@@ -623,7 +621,6 @@ SET(Dialog_HPP_SRCS
     TaskElementColors.h
     Dialogs/DlgObjectSelection.h
     Dialogs/DlgAddProperty.h
-    Dialogs/DlgAddPropertyVarSet.h
     VectorListEditor.h
 )
 
@@ -1419,7 +1416,6 @@ SET(FreeCADGui_SRCS
     MetaTypes.h
     ModuleIO.h
     Notifications.h
-    PreCompiled.cpp
     PreCompiled.h
     QtAll.h
     Control.h
@@ -1500,9 +1496,15 @@ if(MSVC)
     )
 endif(MSVC)
 
-if (FREECAD_USE_PCH)
-    add_definitions(-D_PreComp_)
-    ADD_MSVC_PRECOMPILED_HEADER(FreeCADGui PreCompiled.h PreCompiled.cpp FreeCADGui_CPP_SRCS)
+if(FREECAD_USE_PCH)
+    target_precompile_headers(FreeCADGui PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:"${CMAKE_CURRENT_LIST_DIR}/PreCompiled.h">
+    )
+
+    set_source_files_properties(
+            ${qsintActionPanel_SRCS}
+            ${Quarter_SRCS}
+            PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE)
 endif(FREECAD_USE_PCH)
 
 if (FREECAD_USE_QT_FILEDIALOG)
@@ -1534,7 +1536,7 @@ target_link_libraries(FreeCADGui PUBLIC ${FreeCADGui_LIBS})
 
 if (MSVC)
     target_compile_definitions(FreeCADGui PRIVATE WIN32_LEAN_AND_MEAN)
-    target_compile_options(FreeCADApp PRIVATE /wd4251 /wd4273 /wd4275)
+    target_compile_options(FreeCADGui PRIVATE /wd4251 /wd4273 /wd4275)
 endif()
 
 if (FREECAD_WARN_ERROR)

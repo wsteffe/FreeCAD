@@ -494,7 +494,7 @@ private:
 
     QString getToolWidgetText() const override
     {
-        return QString(tr("B-spline parameters"));
+        return QString(tr("B-Spline Parameters"));
     }
 
     bool canGoToNextMode() override
@@ -515,6 +515,12 @@ private:
             sketchgui->getSketchObject()->solve();
         }
         else if (state() == SelectMode::SeekSecond) {
+            // Prevent adding a new point if it's coincident with the last one.
+            if (!points.empty()
+                && (prevCursorPosition - getLastPoint()).Length() < Precision::Confusion()) {
+                return false;
+            }
+
             // We stay in SeekSecond unless the user closed the bspline.
             bool isClosed = false;
 
@@ -741,6 +747,13 @@ private:
         tryAutoRecomputeIfNotSolve(sketchgui->getSketchObject());
         Gui::Command::openCommand(QT_TRANSLATE_NOOP("Command", "Add Sketch B-Spline"));
 
+        // Restore keyboard focus after command restart
+        if (Gui::Document* doc = Gui::Application::Instance->activeDocument()) {
+            if (Gui::MDIView* mdi = doc->getActiveView()) {
+                mdi->setFocus();
+            }
+        }
+
         // Add the necessary alignment geometries and constraints
         for (size_t i = 0; i < geoIds.size(); ++i) {
             addGeometry(points[i], geoIds[i], i == 0);
@@ -776,7 +789,9 @@ private:
         for (auto& point : points) {
             bsplinePoints3D.emplace_back(point.x, point.y, 0.0);
         }
-        if (onlyeditoutline) {
+
+        double len = (prevCursorPosition - getLastPoint()).Length();
+        if (onlyeditoutline && (points.empty() || len >= Precision::Confusion())) {
             bsplinePoints3D.emplace_back(prevCursorPosition.x, prevCursorPosition.y, 0.0);
         }
 
@@ -892,8 +907,9 @@ void DSHBSplineController::configureToolWidget()
         toolWidget->setNoticeText(
             QApplication::translate("TaskSketcherTool_c1_bspline", "Press F to undo last point."));
 
-        QStringList names = {QApplication::translate("Sketcher_CreateBSpline", "By control points"),
-                             QApplication::translate("Sketcher_CreateBSpline", "By knots")};
+        QStringList names = {
+            QApplication::translate("Sketcher_CreateBSpline", "From control points"),
+            QApplication::translate("Sketcher_CreateBSpline", "From knots")};
         toolWidget->setComboboxElements(WCombobox::FirstCombo, names);
 
         toolWidget->setCheckboxLabel(

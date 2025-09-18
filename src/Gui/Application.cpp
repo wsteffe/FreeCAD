@@ -20,9 +20,6 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "PreCompiled.h"
-
-#ifndef _PreComp_
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <Inventor/errors/SoDebugError.h>
 #include <Inventor/errors/SoError.h>
@@ -41,12 +38,13 @@
 #include <QTextStream>
 #include <QTimer>
 #include <QWindow>
-#endif
 
 #include <QLoggingCategory>
 #include <fmt/format.h>
 #include <list>
 #include <ranges>
+
+#include <FCConfig.h>
 
 #include <App/Document.h>
 #include <App/DocumentObjectPy.h>
@@ -155,6 +153,7 @@ using namespace Gui::DockWnd;
 using namespace std;
 namespace sp = std::placeholders;
 
+FC_LOG_LEVEL_INIT("Gui")
 
 Application* Application::Instance = nullptr;
 
@@ -891,6 +890,10 @@ void Application::exportTo(const char* FileName, const char* DocName, const char
     std::string te = File.extension();
     string unicodepath = Base::Tools::escapedUnicodeFromUtf8(File.filePath().c_str());
     unicodepath = Base::Tools::escapeEncodeFilename(unicodepath);
+
+    if (strcmp(Module, "Part") == 0) {
+        FC_WARN("Exporting with 'Part' is deprecated, use 'ImportGui' instead");
+    }
 
     if (Module) {
         try {

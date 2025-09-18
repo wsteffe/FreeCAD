@@ -86,6 +86,7 @@ list(APPEND FreeCADApp_LIBS
         ${QtXml_LIBRARIES}
 )
 
+generate_from_py(ApplicationDirectories)
 generate_from_py(Document)
 generate_from_py(DocumentObject)
 generate_from_py(Extension)
@@ -112,6 +113,7 @@ generate_embed_from_py(FreeCADInit InitScript.h)
 generate_embed_from_py(FreeCADTest TestScript.h)
 
 SET(FreeCADApp_Pyi_SRCS
+    ApplicationDirectories.pyi
     Extension.pyi
     ExtensionContainer.pyi
     DocumentObjectExtension.pyi
@@ -281,6 +283,7 @@ SET(FreeCADApp_CPP_SRCS
     ${Properties_CPP_SRCS}
     Application.cpp
     ApplicationDirectories.cpp
+    ApplicationDirectoriesPyImp.cpp
     ApplicationPy.cpp
     AutoTransaction.cpp
     Branding.cpp
@@ -344,13 +347,13 @@ SET(FreeCADApp_SRCS
     ${FreeCADApp_Pyi_SRCS}
     FreeCADInit.py
     FreeCADTest.py
-    PreCompiled.cpp
     PreCompiled.h
 )
 
 if(FREECAD_USE_PCH)
-    add_definitions(-D_PreComp_)
-    ADD_MSVC_PRECOMPILED_HEADER(FreeCADApp PreCompiled.h PreCompiled.cpp FreeCADApp_CPP_SRCS)
+    target_precompile_headers(FreeCADApp PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:"${CMAKE_CURRENT_LIST_DIR}/PreCompiled.h">
+    )
 endif(FREECAD_USE_PCH)
 
 target_sources(FreeCADApp PRIVATE ${FreeCADApp_SRCS})

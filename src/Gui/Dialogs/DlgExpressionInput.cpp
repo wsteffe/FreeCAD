@@ -21,15 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "PreCompiled.h"
-#ifndef _PreComp_
 #include <QApplication>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QStyledItemDelegate>
-#endif
 
 #include <fmt/format.h>
 
@@ -240,7 +237,7 @@ void DlgExpressionInput::initializeVarSets()
     comboBoxGroup.setObjectName(QStringLiteral("comboBoxGroup"));
     comboBoxGroup.setInsertPolicy(QComboBox::InsertAtTop);
     comboBoxGroup.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    DlgAddPropertyVarSet::setWidgetForLabel("labelGroup", &comboBoxGroup, ui->formLayout);
+    DlgAddProperty::setWidgetForLabel("labelGroup", &comboBoxGroup, ui->formLayout);
     setTabOrder(ui->comboBoxVarSet, &comboBoxGroup);
     setTabOrder(&comboBoxGroup, ui->lineEditPropNew);
 
@@ -801,7 +798,7 @@ void DlgExpressionInput::onVarSetSelected(int /*index*/)
         return;
     }
 
-    DlgAddPropertyVarSet::populateGroup(comboBoxGroup, varSet);
+    DlgAddProperty::populateGroup(comboBoxGroup, varSet);
     preselectGroup();
     updateVarSetInfo();
     ui->lineEditPropNew->setFocus();
