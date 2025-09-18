@@ -145,15 +145,13 @@ void resetBodiesPlacements(App::Document* doc)
         const Base::Placement Pbody = body->Placement.getValue();
 	if(!Pbody.isIdentity()) anyLegacyBodyPlacement = true;
     }
+    if (!anyLegacyBodyPlacement) return;
 
+    doc->openTransaction("PartDesign: migrate legacy origins / placements");
     for (auto* b : bodies) {
         auto* body = dynamic_cast<PartDesign::Body*>(b);
         resetBodyPlacement(body);
     }
-
-    if (!anyLegacyBodyPlacement) return;
-    doc->openTransaction("PartDesign: migrate legacy origins / placements");
-    resetBodiesPlacements(doc);
     Base::Console().message("[PD-Migrate] Cleared body placements\n");
     doc->commitTransaction();
 
