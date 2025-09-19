@@ -89,6 +89,10 @@ public:
     /** Add an object to the view provider by drag and drop */
     void dropObject(App::DocumentObject*) override;
 
+    bool setEdit(int ModNum) override;
+    void unsetEdit(int ModNum) override;
+
+
 protected:
     /// Copy over all visual properties to the child features
     void unifyVisualProperty(const App::Property* prop);
