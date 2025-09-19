@@ -45,6 +45,7 @@
 #include <Gui/View3DInventorViewer.h>
 #include <Gui/ViewProviderCoordinateSystem.h>
 #include <Gui/ViewProviderDatum.h>
+#include <Gui/TaskTransform.h>
 #include <Mod/PartDesign/App/Body.h>
 #include <Mod/PartDesign/App/DatumCS.h>
 #include <Mod/PartDesign/App/FeatureSketchBased.h>
@@ -471,37 +472,50 @@ bool ViewProviderBody::canDragObjectToTarget(App::DocumentObject* obj,
 
 bool ViewProviderBody::setEdit(int ModNum)
 {
+    // Connect only for Transform edit mode, and only once
+    if (ModNum == Gui::ViewProvider::Transform && !m_tfAcceptConn.connected()) {
+        m_tfAcceptConn = Gui::TaskTransformDialog::signalAccepted.connect(
+            [this](App::DocumentObject* obj) {
+                // Make sure the signal refers to *this* Body
+                if (!obj || obj != this->getObject())
+                    return;
+
+                // Type check without pulling in heavy headers
+                static const Base::Type BodyT = Base::Type::fromName("PartDesign::Body");
+                if (!obj->getTypeId().isDerivedFrom(BodyT))
+                    return;
+
+                auto* body = static_cast<PartDesign::Body*>(obj);
+
+                // Only absorb if something actually moved
+                if (body->Placement.getValue().isIdentity())
+                    return;
+
+                try {
+                    // Your helper does NOT open transactions or recompute
+                    PartDesign::resetBodyPlacement(body);
+                    // Do NOT recompute here; TaskTransformDialog::accept() will
+                    // recompute right after commit. That avoids double recompute.
+                } catch (...) {
+                    Base::Console().warning(
+                        "[PartDesign][Transform] resetBodyPlacement failed for %s\n",
+                        body->getNameInDocument());
+                }
+            });
+    }
+
     // existing logic…
     return PartGui::ViewProviderPart::setEdit(ModNum);
 }
 
 void ViewProviderBody::unsetEdit(int ModNum)
 {
+    // Disconnect when leaving Transform mode to avoid stray callbacks
+    if (ModNum == Gui::ViewProvider::Transform && m_tfAcceptConn.connected())
+        m_tfAcceptConn.disconnect();
+
     // Call base first (or after), depending on existing pattern
     PartGui::ViewProviderPart::unsetEdit(ModNum);
-
-    // Only do something when exiting Transform edit mode
-    if (ModNum == Gui::ViewProvider::Transform) {
-        auto* body = dynamic_cast<PartDesign::Body*>(this->getObject());
-        if (!body) return;
-    
-        const Base::Placement& pla = body->Placement.getValue();
-        if (!pla.isIdentity()) {
-            App::Document* doc = body->getDocument();
-    
-            // One clean undo step in the GUI stack.
-            Gui::Command::openCommand(QT_TR_NOOP("PartDesign: absorb Body transform"));
-            try {
-                PartDesign::resetBodyPlacement(body);   // your helper (no recompute/txn inside)
-                if (doc) doc->recompute();              // recompute only when we actually changed things
-            } catch (...) {
-                Base::Console().warning(
-                    "[PartDesign][Transform] resetBodyPlacement failed for %s\n",
-                    body->getNameInDocument());
-            }
-            Gui::Command::commitCommand();
-        }
-    }
 
  }
 
