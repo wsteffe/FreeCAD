@@ -101,6 +101,7 @@ protected:
 
 private:
     static const char* BodyModeEnum[];
+    boost::signals2::connection m_tfAcceptConn;
 };
 
 
