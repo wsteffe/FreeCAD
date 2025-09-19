@@ -35,6 +35,7 @@
 #include <App/Part.h>
 #include <App/VarSet.h>
 #include <Base/Console.h>
+#include <Base/Placement.h>
 #include <Gui/ActionFunction.h>
 #include <Gui/Application.h>
 #include <Gui/Command.h>
@@ -48,6 +49,7 @@
 #include <Mod/PartDesign/App/DatumCS.h>
 #include <Mod/PartDesign/App/FeatureSketchBased.h>
 #include <Mod/PartDesign/App/FeatureBase.h>
+#include <Mod/PartDesign/App/ResetBodyPlacement.h>
 
 #include "ViewProviderBody.h"
 #include "Utils.h"
@@ -466,4 +468,40 @@ bool ViewProviderBody::canDragObjectToTarget(App::DocumentObject* obj,
     return ViewProviderPart::canDragObjectToTarget(obj, target);
 }
 
+
+bool ViewProviderBody::setEdit(int ModNum)
+{
+    // existing logic…
+    return PartGui::ViewProviderPart::setEdit(ModNum);
+}
+
+void ViewProviderBody::unsetEdit(int ModNum)
+{
+    // Call base first (or after), depending on existing pattern
+    PartGui::ViewProviderPart::unsetEdit(ModNum);
+
+    // Only do something when exiting Transform edit mode
+    if (ModNum == Gui::ViewProvider::Transform) {
+        auto* body = dynamic_cast<PartDesign::Body*>(this->getObject());
+        if (!body) return;
+    
+        const Base::Placement& pla = body->Placement.getValue();
+        if (!pla.isIdentity()) {
+            App::Document* doc = body->getDocument();
+    
+            // One clean undo step in the GUI stack.
+            Gui::Command::openCommand(QT_TR_NOOP("PartDesign: absorb Body transform"));
+            try {
+                PartDesign::resetBodyPlacement(body);   // your helper (no recompute/txn inside)
+                if (doc) doc->recompute();              // recompute only when we actually changed things
+            } catch (...) {
+                Base::Console().warning(
+                    "[PartDesign][Transform] resetBodyPlacement failed for %s\n",
+                    body->getNameInDocument());
+            }
+            Gui::Command::commitCommand();
+        }
+    }
+
+ }
 
