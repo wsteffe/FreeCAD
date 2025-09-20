@@ -74,7 +74,7 @@ const QString TaskFeaturePick::getFeatureStatusString(const featureStatus st)
         case isUsed:
             return tr("Sketch already used by other feature");
         case otherBody:
-            return tr("Valid");
+            return tr("Belongs to another body");
         case otherPart:
             return tr("Belongs to another part");
         case notInBody:
