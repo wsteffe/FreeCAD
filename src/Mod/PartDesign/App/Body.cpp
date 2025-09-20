@@ -45,6 +45,7 @@ Body::Body()
 {
     ADD_PROPERTY_TYPE(AllowCompound, (false), "Experimental", App::Prop_None, "Allow multiple solids in Body (experimental)");
     Placement.setStatus(App::Property::Hidden, true);
+    Placement.setStatus(App::Property::ReadOnly, false);
 
     _GroupTouched.setStatus(App::Property::Output, true);
 
@@ -594,6 +595,7 @@ void Body::onDocumentRestored()
         Tip.touch();
     // Hide & lock Body.Placement in the UI
     Placement.setStatus(App::Property::Hidden, true);
+    Placement.setStatus(App::Property::ReadOnly, false);
 
     // Ensure Origins under *this* Body keep their Placement visible/editable
     {
