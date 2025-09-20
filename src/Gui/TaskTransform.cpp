@@ -48,11 +48,13 @@
 
 #include <Inventor/nodes/SoPickStyle.h>
 
+// Single instance, lives in FreeCADGui.dll
 boost::signals2::signal<void(App::DocumentObject* obj)>&
 Gui::TaskTransformDialog::signalAccepted() {
     static boost::signals2::signal<void(App::DocumentObject* obj)> s;
     return s;
 }
+
 
 using namespace Gui;
 
@@ -817,7 +819,7 @@ void TaskTransformDialog::onRedo()
 bool TaskTransformDialog::accept()
 {
     if (auto document = vp->getDocument()) {
-	signalAccepted()(vp ? vp->getObject() : nullptr);
+        signalAccepted()(vp ? vp->getObject() : nullptr);
         document->commitCommand();
         document->resetEdit();
         document->getDocument()->recompute();
