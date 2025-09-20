@@ -167,7 +167,7 @@ public:
     void onUndo() override;
     void onRedo() override;
 
-    static boost::signals2::signal<void (App::DocumentObject* obj)> signalAccepted;
+    static boost::signals2::signal<void(App::DocumentObject* obj)>& signalAccepted();
 
 private:
     void openCommand();
