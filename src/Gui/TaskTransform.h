@@ -148,7 +148,7 @@ private:
     ParameterGrp::handle hGrp = App::GetApplication().GetParameterGroupByPath("User parameter:BaseApp/History/Dragger");
 };
 
-class TaskTransformDialog: public Gui::TaskView::TaskDialog
+class GuiExport TaskTransformDialog: public Gui::TaskView::TaskDialog
 {
     Q_OBJECT
 
@@ -167,7 +167,7 @@ public:
     void onUndo() override;
     void onRedo() override;
 
-    static boost::signals2::signal<void(App::DocumentObject* obj)>& signalAccepted();
+    static boost::signals2::signal<void (App::DocumentObject* obj)> signalAccepted;
 
 private:
     void openCommand();
