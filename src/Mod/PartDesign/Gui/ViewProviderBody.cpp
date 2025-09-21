@@ -474,7 +474,7 @@ bool ViewProviderBody::setEdit(int ModNum)
 {
     // Connect only for Transform edit mode, and only once
     if (ModNum == Gui::ViewProvider::Transform && !m_tfAcceptConn.connected()) {
-        m_tfAcceptConn = Gui::TaskTransformDialog::signalAccepted().connect(
+        m_tfAcceptConn = Gui::TaskTransformDialog::signalAccepted.connect(
            [this](App::DocumentObject* obj) {
                 // Make sure the signal refers to *this* Body
                 if (!obj || obj != this->getObject())
