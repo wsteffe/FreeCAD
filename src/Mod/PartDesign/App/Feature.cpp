@@ -283,8 +283,6 @@ Part::Feature* Feature::getBaseObject(bool silent) const {
         if (!BaseObject) {
             err =  "No base feature linked";
         }
-    } else {
-        err = "Base property not set";
     }
 
     // If the function not in silent mode throw the exception describing the error
@@ -325,6 +323,8 @@ Part::TopoShape Feature::getBaseTopoShape(bool silent) const
     if (!BaseObject) {
         return result;
     }
+//    auto body = getFeatureBody();
+//    if(body && !body->hasObject(BaseObject)) return result;
 
     if (BaseObject != BaseFeature.getValue()) {
         auto body = getFeatureBody();
