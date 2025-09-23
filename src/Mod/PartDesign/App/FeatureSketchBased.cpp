@@ -638,7 +638,7 @@ Part::Feature* ProfileBased::getBaseObject(bool silent) const
     }
 
     PartDesign::Body* body= Feature::getFeatureBody();
-    if(body && !body->hasObject(spt))
+    if(body && spt) if(!body->hasObject(spt))
         return nullptr;
 
     if (!silent && err) {
