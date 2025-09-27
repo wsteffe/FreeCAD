@@ -34,6 +34,8 @@ class GuiExport ViewProviderOriginGroup: public ViewProviderDocumentObject,
 public:
     ViewProviderOriginGroup ();
     ~ViewProviderOriginGroup () override;
+
+    void extensionUpdateData(const App::Property* prop) override;
 };
 
 } /* Gui  */

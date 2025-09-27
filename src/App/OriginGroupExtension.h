@@ -25,6 +25,9 @@
 
 #include "GeoFeatureGroupExtension.h"
 #include "QCoreApplication"
+#include <Base/Type.h>
+#include <Base/Matrix.h>
+namespace Base { class Placement; }
 
 namespace App
 {
@@ -78,6 +81,10 @@ public:
                                int depth) const override;
 
     void extensionOnChanged(const Property* p) override;
+    bool extensionGetGlobalPlacement(Base::Placement& out) const;
+
+    bool actsAsGroupBoundary() const override;
+
 
 protected:
     /// Checks integrity of the Origin
@@ -88,8 +95,12 @@ protected:
     void onExtendedUnsetupObject() override;
 
 private:
-    /// Creates a localized Origin object
+    
+    Base::Placement getChainedPlacement() const;
+/// Creates a localized Origin object
     App::DocumentObject* getLocalizedOrigin(App::Document* doc);
+    void enforcePlacementVisibility_() const;
+    void wireParentOrigin_();
 };
 
 using OriginGroupExtensionPython = ExtensionPythonT<GroupExtensionPythonT<OriginGroupExtension>>;

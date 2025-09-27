@@ -41,6 +41,7 @@ public:
 
     std::vector<App::DocumentObject*> extensionClaimChildren()const override;
     std::vector<App::DocumentObject*> extensionClaimChildren3D()const override;
+    void extensionUpdateData(const App::Property* prop) override;
 
 private:
     std::vector<App::DocumentObject*> constructChildren (

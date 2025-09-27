@@ -86,6 +86,33 @@ std::vector<App::DocumentObject*> ViewProviderOriginGroupExtension::extensionCla
     return constructChildren ( ViewProviderGeoFeatureGroupExtension::extensionClaimChildren3D () );
 }
 
+void ViewProviderOriginGroupExtension::extensionUpdateData(const App::Property* prop)
+{
+    auto obj = getExtendedViewProvider()->getObject();
+    auto grp = obj ? obj->getExtensionByType<App::GeoFeatureGroupExtension>() : nullptr;
+
+    Base::Placement P;
+    // Container placement changes (same as upstream)
+    if (grp && prop == &grp->placement()) {
+        P = grp->placement().getValue();
+    }
+    if (auto* og = obj ? obj->getExtensionByType<App::OriginGroupExtension>() : nullptr) {
+        if (auto* originObj = og->Origin.getValue()) {
+            if (auto* pp = dynamic_cast<App::PropertyPlacement*>(
+                    originObj->getPropertyByName("Placement"))) {
+                P = P * pp->getValue();  // postmultiply local Origin
+            }
+        }
+    }
+    if (!P.isIdentity()) {
+        getExtendedViewProvider()->setTransformation(P.toMatrix());
+    }
+    if(!grp || prop != &grp->placement()){
+        // Defer to base for all other properties
+        ViewProviderGroupExtension::extensionUpdateData(prop);
+    }
+}
+
 
 namespace Gui {
 EXTENSION_PROPERTY_SOURCE_TEMPLATE(Gui::ViewProviderOriginGroupExtensionPython, Gui::ViewProviderOriginGroupExtension)

@@ -24,6 +24,7 @@
 
 #include <App/Document.h>
 #include <Base/Placement.h>
+#include "PropertyLinks.h"
 
 #include "Origin.h"
 
@@ -35,6 +36,16 @@ Origin::Origin()
 {
     // App::Origin is a LCS for which placement is fixed to identity.
     Placement.setStatus(Property::Hidden, true);
+
+    ADD_PROPERTY_TYPE(ParentOrigin,
+                  (nullptr),
+                  "Base",
+                  static_cast<App::PropertyType>(App::Prop_Hidden | App::Prop_ReadOnly),
+                  "Auto link to parent container's Origin");
+    ParentOrigin.setScope(App::LinkScope::Global);
+
 }
 
 Origin::~Origin() = default;
+
+

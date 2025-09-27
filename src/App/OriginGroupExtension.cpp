@@ -25,9 +25,11 @@
 #include <Base/Console.h>
 #include <Base/Exception.h>
 #include <Base/Tools.h>
+#include <Base/Placement.h>
 
 #include "OriginGroupExtension.h"
 #include "GeoFeature.h"
+#include "Link.h"
 #include "Origin.h"
 
 
@@ -73,24 +75,54 @@ App::Origin* OriginGroupExtension::getOrigin() const
     }
 }
 
-bool OriginGroupExtension::extensionGetSubObject(DocumentObject*& ret,
+
+bool OriginGroupExtension::extensionGetSubObject(App::DocumentObject*& ret,
                                                  const char* subname,
                                                  PyObject** pyObj,
                                                  Base::Matrix4D* mat,
                                                  bool transform,
                                                  int depth) const
 {
+    int debug = false;
+    if (debug)
+    {
+        Base::Console().message(
+            "OGE extGetSubObject owner=%s sub='%s' mat=%p transform=%d depth=%d\n",
+            getExtendedObject()->getNameInDocument(),
+            subname ? subname : "",
+            (void*)mat,
+            int(transform),
+            depth);
+
+        if (mat && transform) {
+            Base::Placement P;
+            P.fromMatrix(*mat);
+            Base::Vector3d pos = P.getPosition();
+            double yaw = 0, pitch = 0, roll = 0;
+            P.getRotation().getYawPitchRoll(yaw, pitch, roll);
+            Base::Console().message(
+                "mat(accum) -> Pos=(%.6f, %.6f, %.6f), YPR=(%.6f, %.6f, %.6f)\n",
+                pos.x,
+                pos.y,
+                pos.z,
+                yaw,
+                pitch,
+                roll);
+        }
+    }
+
+    // Let the base do its usual work (it multiplies by this container's Placement)
     App::DocumentObject* originObj = Origin.getValue();
     const char* dot;
     if (originObj && originObj->isAttachedToDocument() && subname && (dot = strchr(subname, '.'))) {
-        bool found;
+        bool subObjectIsOrigin=false;
         if (subname[0] == '$') {
-            found = std::string(subname + 1, dot) == originObj->Label.getValue();
+            subObjectIsOrigin = std::string(subname + 1, dot) == originObj->Label.getValue();
         }
         else {
-            found = std::string(subname, dot) == originObj->getNameInDocument();
+            subObjectIsOrigin = std::string(subname, dot) == originObj->getNameInDocument();
         }
-        if (found) {
+        if (subObjectIsOrigin) {
             if (mat && transform) {
                 *mat *= const_cast<OriginGroupExtension*>(this)->placement().getValue().toMatrix();
             }
@@ -98,13 +130,96 @@ bool OriginGroupExtension::extensionGetSubObject(DocumentObject*& ret,
             return true;
         }
     }
-    return GeoFeatureGroupExtension::extensionGetSubObject(ret,
-                                                           subname,
-                                                           pyObj,
-                                                           mat,
-                                                           transform,
-                                                           depth);
+
+    ret = nullptr;
+    // --- Empty subname: return this container (ONLY container Placement, as upstream) ---
+    if (!subname || *subname == 0) {
+        auto obj = dynamic_cast<const App::DocumentObject*>(getExtendedContainer());
+        ret = const_cast<App::DocumentObject*>(obj);
+        if (mat && transform) {
+            // Upstream behavior: container Placement only
+            *mat *= const_cast<OriginGroupExtension*>(this)->placement().getValue().toMatrix();
+        }
+        return true;
+    }
+    else if ((dot = strchr(subname, '.'))) {
+        if (subname[0] != '$') {
+            ret = Group.findUsingMap(std::string(subname, dot));
+        }
+        else {
+            std::string name = std::string(subname + 1, dot);
+            for (auto child : Group.getValues()) {
+                if (name == child->Label.getStrValue()) {
+                    ret = child;
+                    break;
+                }
+            }
+        }
+        if (ret) {
+            ++dot;
+            if (*dot && !ret->hasExtension(App::LinkBaseExtension::getExtensionClassTypeId())
+                && !ret->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())) {
+                // Consider this
+                // Body
+                //  | -- Pad
+                //        | -- Sketch
+                //
+                // Suppose we want to getSubObject(Body,"Pad.Sketch.")
+                // Because of the special property of geo feature group, both
+                // Pad and Sketch are children of Body, so we can't call
+                // getSubObject(Pad,"Sketch.") as this will transform Sketch
+                // using Pad's placement.
+                //
+                const char* next = strchr(dot, '.');
+                if (next) {
+                    App::DocumentObject* nret = nullptr;
+                    extensionGetSubObject(nret, dot, pyObj, mat, transform, depth + 1);
+                    if (nret) {
+                        ret = nret;
+                        return true;
+                    }
+                }
+            }
+            if (mat && transform) {
+                *mat *= const_cast<OriginGroupExtension*>(this)->placement().getValue().toMatrix();
+                if (auto* orgObj = Origin.getValue()) {
+                    if (auto* org = dynamic_cast<App::Origin*>(orgObj)) {
+                        if (orgObj->isAttachedToDocument()) {
+                            *mat *= org->Placement.getValue().toMatrix();
+                        }
+                    }
+                }
+            }
+            ret = ret->getSubObject(dot, pyObj, mat, true, depth + 1);
+        }
+    }
+    return true;
 }
+
+
+bool OriginGroupExtension::extensionGetGlobalPlacement(Base::Placement& out) const
+{
+    try {
+        // Container first
+        Base::Placement C =
+            const_cast<OriginGroupExtension*>(this)->placement().getValue();
+
+        // Then this container's local Origin
+        Base::Placement O; // identity
+        if (auto* orgObj = Origin.getValue()) {
+            if (auto* org = dynamic_cast<App::Origin*>(orgObj)) {
+                if (org->isAttachedToDocument())
+                    O = org->Placement.getValue();
+            }
+        }
+
+        out = C * O;   // keep per-level order consistent with the matrix path
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 
 App::DocumentObject* OriginGroupExtension::getGroupOfObject(const DocumentObject* obj)
 {
@@ -144,6 +259,9 @@ short OriginGroupExtension::extensionMustExecute()
 
 App::DocumentObjectExecReturn* OriginGroupExtension::extensionExecute()
 {
+    // >>> cablaggio tardivo: ora il Body è davvero nel Part
+    wireParentOrigin_();
+
     try {  // try to find all base axis and planes in the origin
         getOrigin();
     }
@@ -163,8 +281,65 @@ App::DocumentObject* OriginGroupExtension::getLocalizedOrigin(App::Document* doc
     return originObject;
 }
 
+
+void OriginGroupExtension::wireParentOrigin_()  // non-const
+{
+    auto* owner = getExtendedObject();
+    App::DocumentObject* parentOriginObj = nullptr;
+
+    if (owner) {
+        for (auto* in : owner->getInList()) {
+            if (!in) {
+                continue;
+            }
+            if (!in->hasExtension(App::GroupExtension::getExtensionClassTypeId())) {
+                continue;
+            }
+
+            if (auto* gext = static_cast<App::GroupExtension*>(
+                    in->getExtension(App::GroupExtension::getExtensionClassTypeId()))) {
+                if (!gext || !gext->hasObject(owner)) {
+                    continue;
+                }
+
+                if (in->hasExtension(App::OriginGroupExtension::getExtensionClassTypeId())) {
+                    if (auto* pOge = static_cast<OriginGroupExtension*>(
+                            in->getExtension(OriginGroupExtension::getExtensionClassTypeId()))) {
+                        try {
+                            parentOriginObj = pOge->getOrigin();
+                        }
+                        catch (...) {
+                            parentOriginObj = nullptr;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    if (auto* childOrg = dynamic_cast<App::Origin*>(Origin.getValue())) {
+        // Only set link if the parent origin is clearly valid & attached
+        App::DocumentObject* newTarget =
+            (parentOriginObj && parentOriginObj->isAttachedToDocument())
+            ? static_cast<App::DocumentObject*>(parentOriginObj)
+            : nullptr;
+
+        if (childOrg->ParentOrigin.getValue() != newTarget) {
+            childOrg->ParentOrigin.setValue(newTarget);
+        }
+    }
+
+    // Do NOT call owner->touch() or childOrg->touch() here.
+}
+
+
+
+
 void OriginGroupExtension::onExtendedSetupObject()
 {
+    wireParentOrigin_();
+    enforcePlacementVisibility_();
     App::Document* doc = getExtendedObject()->getDocument();
 
     App::DocumentObject* originObj = getLocalizedOrigin(doc);
@@ -185,34 +360,78 @@ void OriginGroupExtension::onExtendedUnsetupObject()
     GeoFeatureGroupExtension::onExtendedUnsetupObject();
 }
 
-void OriginGroupExtension::extensionOnChanged(const Property* p)
+
+void OriginGroupExtension::extensionOnChanged(const App::Property* p)
 {
+    App::DocumentObject* owner = getExtendedObject();
+
+    // 1) Cambia il link all'Origin del container → rewire + visibilità + gestione Importing
     if (p == &Origin) {
-        App::DocumentObject* owner = getExtendedObject();
+        wireParentOrigin_();
+        enforcePlacementVisibility_();
+
         App::DocumentObject* origin = Origin.getValue();
-        // Document::Importing indicates the object is being imported (i.e.
-        // copied). So check the Origin ownership here to prevent copy without
-        // dependency
         if (origin && owner && owner->getDocument()
             && owner->getDocument()->testStatus(Document::Importing)) {
             for (auto o : origin->getInList()) {
                 if (o != owner
                     && o->hasExtension(App::OriginGroupExtension::getExtensionClassTypeId())) {
                     App::Document* document = owner->getDocument();
-                    // Temporarily reset 'Restoring' status to allow document to auto label new
-                    // objects
-                    Base::ObjectStatusLocker<Document::Status, Document> guard(Document::Restoring,
-                                                                               document,
-                                                                               false);
+                    Base::ObjectStatusLocker<Document::Status, Document> guard(
+                        Document::Restoring, document, false);
                     Origin.setValue(getLocalizedOrigin(document));
                     FC_WARN("Reset origin in " << owner->getFullName());
                     return;
                 }
             }
         }
+        // non ritorniamo: più sotto gestiamo l’eventuale frameChanged
     }
+
+
+    if (p == &Group) {
+        // We are the parent; rewire all OGE children just added/removed
+        for (auto* ch : getAllChildren()) {
+            if (!ch) continue;
+            if (!ch->hasExtension(App::OriginGroupExtension::getExtensionClassTypeId()))
+                continue;
+            if (auto* oge = static_cast<OriginGroupExtension*>(
+                    ch->getExtension(OriginGroupExtension::getExtensionClassTypeId()))) {
+                try { oge->wireParentOrigin_(); } catch (...) {}
+                oge->wireParentOrigin_();   // sets ch.Origin.ParentOrigin -> this.Origin
+            }
+        }
+    }
+
+
+    // 3) Decidi se il frame del container è cambiato
+    bool frameChanged = false;
+
+    // 3a) Placement del container (Part/Body) cambiata?
+    if (p == &const_cast<OriginGroupExtension*>(this)->placement())
+        frameChanged = true;
+
+    // 3b) Placement dell’Origin del container cambiata?
+    if (auto* org = dynamic_cast<App::Origin*>(Origin.getValue())) {
+        if (p == &org->Placement)
+            frameChanged = true;
+    }
+
+    // NB: NON controlliamo più ParentOrigin qui, perché ora vive su App::Origin
+    //     e la sua variazione farà ricomputare l'Origin stesso.
+
+    if (frameChanged) {
+        // Tocca SOLO il container (niente figli)
+        if (owner && !owner->isTouched())
+            owner->touch();
+    }
+
+    // 4) Mantieni comportamento base
     GeoFeatureGroupExtension::extensionOnChanged(p);
 }
+
+
+
 
 void OriginGroupExtension::relinkToOrigin(App::DocumentObject* obj)
 {
@@ -309,6 +528,7 @@ bool OriginGroupExtension::hasObject(const DocumentObject* obj, bool recursive) 
     return App::GroupExtension::hasObject(obj, recursive);
 }
 
+bool OriginGroupExtension::actsAsGroupBoundary() const { return false; }
 
 // Python feature ---------------------------------------------------------
 
@@ -319,3 +539,52 @@ EXTENSION_PROPERTY_SOURCE_TEMPLATE(App::OriginGroupExtensionPython, App::OriginG
 // explicit template instantiation
 template class AppExport ExtensionPythonT<GroupExtensionPythonT<OriginGroupExtension>>;
 }  // namespace App
+
+Base::Placement OriginGroupExtension::getChainedPlacement() const
+{
+    // Access non-const placement() from a const method (same pattern used elsewhere)
+    Base::Placement groupP = const_cast<OriginGroupExtension*>(this)->placement().getValue();
+
+    App::DocumentObject* originObj = Origin.getValue();
+    if (originObj && originObj->isAttachedToDocument()) {
+        if (auto* org = dynamic_cast<App::Origin*>(originObj)) {
+            try {
+                return org->Placement.getValue() * groupP;
+            } catch (...) {
+                return groupP;
+            }
+        }
+    }
+    return groupP;
+}
+
+void OriginGroupExtension::enforcePlacementVisibility_() const
+{
+    // Container (owner) placement: Hidden = true, ReadOnly = false
+    if (auto* owner = const_cast<OriginGroupExtension*>(this)->getExtendedObject()) {
+        if (auto* prop = owner->getPropertyByName("Placement")) {
+            try {
+                prop->setStatus(App::Property::Hidden, true);
+            } catch (...) {}
+            try {
+                prop->setStatus(App::Property::ReadOnly, false);
+            } catch (...) {}
+        }
+    }
+
+    // Origin placement: Hidden = false, ReadOnly = false
+    try {
+        if (auto* org = const_cast<OriginGroupExtension*>(this)->getOrigin()) {
+            if (auto* prop = org->getPropertyByName("Placement")) {
+                try {
+                    prop->setStatus(App::Property::Hidden, false);
+                } catch (...) {}
+                try {
+                    prop->setStatus(App::Property::ReadOnly, false);
+                } catch (...) {}
+            }
+        }
+    } catch (...) {
+        // getOrigin() may throw if Origin isn't present/initialized yet
+    }
+}

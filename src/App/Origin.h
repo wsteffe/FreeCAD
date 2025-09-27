@@ -42,6 +42,8 @@ public:
     Origin();
     ~Origin() override;
 
+    PropertyLink ParentOrigin;  // hidden: link to ancestor container's Origin
+
     /// returns the type name of the ViewProvider
     const char* getViewProviderName() const override
     {
@@ -52,6 +54,7 @@ public:
     {
         return true;
     }
+
 };
 
 }  // namespace App

@@ -36,3 +36,9 @@ ViewProviderOriginGroup::ViewProviderOriginGroup ()
 }
 
 ViewProviderOriginGroup::~ViewProviderOriginGroup () = default;
+
+
+void ViewProviderOriginGroup::extensionUpdateData(const App::Property* prop)
+{
+    ViewProviderGeoFeatureGroupExtension::extensionUpdateData(prop);
+}
