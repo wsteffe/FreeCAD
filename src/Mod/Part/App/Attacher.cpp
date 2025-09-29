@@ -66,6 +66,9 @@
 #include <App/Application.h>
 #include <App/Document.h>
 #include <App/Datums.h>
+#include <App/Origin.h>
+#include <App/OriginGroupExtension.h>
+#include <App/GeoFeatureGroupExtension.h>
 #include <Base/Console.h>
 
 #include "Attacher.h"
@@ -1207,6 +1210,45 @@ AttachEngine3D::_calculateAttachedPlacement(const std::vector<App::DocumentObjec
     // common stuff for all map modes
     App::DocumentObject* subObj = objs[0]->getSubObject(subs[0].c_str());
     Base::Placement Place = App::GeoFeature::getGlobalPlacement(subObj, objs[0], subs[0]);
+    
+    // Helper: is 'node' somewhere under 'parent' in the group hierarchy?
+    auto isUnder = [](App::DocumentObject* node, App::DocumentObject* parent) -> bool {
+        for (App::DocumentObject* g = App::GeoFeatureGroupExtension::getGroupOfObject(node);
+             g; g = App::GeoFeatureGroupExtension::getGroupOfObject(g))
+        {
+            if (g == parent) return true;
+        }
+        return false;
+    };
+
+    // Strip ONLY when objs[0] is exactly the container's own Origin
+    if (!objs.empty() && objs[0]->getTypeId() == App::Origin::getClassTypeId()) {
+        App::DocumentObject* origin = objs[0];
+
+        // Find the owning container of this Origin
+        if (App::DocumentObject* container =
+                App::GeoFeatureGroupExtension::getGroupOfObject(origin)) {
+            if (container->hasExtension(App::OriginGroupExtension::getExtensionClassTypeId())) {
+                if (auto* og = container->getExtensionByType<App::OriginGroupExtension>()) {
+                    // Must be the container's own Origin (not some other Origin)
+                    if (og->Origin.getValue() == origin) {
+                        // And the support must live under THIS Origin (excludes LCS etc.)
+                        if (subObj && (subObj == origin || isUnder(subObj, origin))) {
+                            if (auto* pp = dynamic_cast<App::PropertyPlacement*>(
+                                    origin->getPropertyByName("Placement"))) {
+                                const Base::Placement originLocal = pp->getValue();
+                                if (!originLocal.isIdentity()) {
+                                    Place = originLocal.inverse() * Place;  // make result Origin-local
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     Base::Vector3d vec = Place.getPosition();
     gp_Pnt refOrg = gp_Pnt(vec.x, vec.y, vec.z);  // origin of linked object
 
@@ -2285,6 +2327,44 @@ AttachEngineLine::_calculateAttachedPlacement(const std::vector<App::DocumentObj
         // common stuff for all map modes
         App::DocumentObject* subObj = objs[0]->getSubObject(subs[0].c_str());
         Base::Placement Place = App::GeoFeature::getGlobalPlacement(subObj, objs[0], subs[0]);
+
+        // Helper: is 'node' somewhere under 'parent' in the group hierarchy?
+        auto isUnder = [](App::DocumentObject* node, App::DocumentObject* parent) -> bool {
+            for (App::DocumentObject* g = App::GeoFeatureGroupExtension::getGroupOfObject(node);
+                 g; g = App::GeoFeatureGroupExtension::getGroupOfObject(g))
+            {
+                if (g == parent) return true;
+            }
+            return false;
+        };
+    
+        // Strip ONLY when objs[0] is exactly the container's own Origin
+        if (!objs.empty() && objs[0]->getTypeId() == App::Origin::getClassTypeId()) {
+            App::DocumentObject* origin = objs[0];
+    
+            // Find the owning container of this Origin
+            if (App::DocumentObject* container =
+                    App::GeoFeatureGroupExtension::getGroupOfObject(origin)) {
+                if (container->hasExtension(App::OriginGroupExtension::getExtensionClassTypeId())) {
+                    if (auto* og = container->getExtensionByType<App::OriginGroupExtension>()) {
+                        // Must be the container's own Origin (not some other Origin)
+                        if (og->Origin.getValue() == origin) {
+                            // And the support must live under THIS Origin (excludes LCS etc.)
+                            if (subObj && (subObj == origin || isUnder(subObj, origin))) {
+                                if (auto* pp = dynamic_cast<App::PropertyPlacement*>(
+                                        origin->getPropertyByName("Placement"))) {
+                                    const Base::Placement originLocal = pp->getValue();
+                                    if (!originLocal.isIdentity()) {
+                                        Place = originLocal.inverse() * Place;  // make result Origin-local
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         Base::Vector3d vec = Place.getPosition();
         gp_Pnt refOrg = gp_Pnt(vec.x, vec.y, vec.z);  // origin of linked object
 

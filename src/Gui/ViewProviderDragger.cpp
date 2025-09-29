@@ -36,6 +36,8 @@
 #include <Base/Vector3D.h>
 #include <Base/Converter.h>
 
+#include <App/OriginGroupExtension.h>
+
 #include "Application.h"
 #include "BitmapFactory.h"
 #include "Control.h"
@@ -201,7 +203,15 @@ App::PropertyPlacement* ViewProviderDragger::getPlacementProperty() const
         return linkExtension->getPlacementProperty();
     }
 
-    return getObject()->getPropertyByName<App::PropertyPlacement>("Placement");
+    if (object->hasExtension(App::OriginGroupExtension::getExtensionClassTypeId())) {
+        if (auto* og = object->getExtensionByType<App::OriginGroupExtension>()) {
+            if (auto* originObj = og->Origin.getValue()) {
+                object = originObj;
+            }
+        }
+    }
+
+    return object->getPropertyByName<App::PropertyPlacement>("Placement");
 }
 
 bool ViewProviderDragger::setEdit(int ModNum)

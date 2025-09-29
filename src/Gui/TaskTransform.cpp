@@ -30,6 +30,7 @@
 #include <App/Document.h>
 #include <App/GeoFeature.h>
 #include <App/Services.h>
+#include <App/OriginGroupExtension.h>
 #include <Base/Precision.h>
 #include <Base/ServiceProvider.h>
 #include <Base/Tools.h>
@@ -47,9 +48,6 @@
 #include "ui_TaskTransform.h"
 
 #include <Inventor/nodes/SoPickStyle.h>
-
-boost::signals2::signal<void(App::DocumentObject* obj)>
-    Gui::TaskTransformDialog::signalAccepted;
 
 using namespace Gui;
 
@@ -482,6 +480,12 @@ void TaskTransform::onSelectionChanged(const SelectionChanges& msg)
     auto doc = Application::Instance->getDocument(msg.pDocName);
     auto obj = doc->getDocument()->getObject(msg.pObjectName);
 
+    if (auto* og = obj->getExtensionByType<App::OriginGroupExtension>()) {
+        if (auto* originObj = og->Origin.getValue()) {
+            obj = originObj;
+        }
+    }
+
     auto orgDoc = Application::Instance->getDocument(msg.pOriginalMsg->pDocName);
     auto orgObj = orgDoc->getDocument()->getObject(msg.pOriginalMsg->pObjectName);
 
@@ -814,7 +818,6 @@ void TaskTransformDialog::onRedo()
 bool TaskTransformDialog::accept()
 {
     if (auto document = vp->getDocument()) {
-        signalAccepted(vp ? vp->getObject() : nullptr);
         document->commitCommand();
         document->resetEdit();
         document->getDocument()->recompute();
