@@ -110,8 +110,6 @@ SET(Module_SRCS
     PreCompiled.h
     Measure.cpp
     Measure.h
-    ResetBodyPlacement.cpp
-    ResetBodyPlacement.h
 )
 SOURCE_GROUP("Module" FILES ${Module_SRCS})
 

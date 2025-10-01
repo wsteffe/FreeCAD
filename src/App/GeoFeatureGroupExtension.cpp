@@ -135,6 +135,20 @@ const App::DocumentObject* GeoFeatureGroupExtension::getBoundaryGroupOfObject(co
 }
 
 
+Base::Placement GeoFeatureGroupExtension::globalGroupPlacementInBoundary(const App::DocumentObject* obj)
+{
+    Base::Placement result;
+    const App::DocumentObject* boundary = getBoundaryGroupOfObject(obj);
+    const App::DocumentObject* container = getGroupOfObject(obj);
+    while (container && container != boundary) {
+        if (auto* prop = dynamic_cast<const App::PropertyPlacement*>(container->getPropertyByName("Placement"))) {
+            result = prop->getValue() * result;
+        }
+        container = getGroupOfObject(container);
+    }
+    return result;
+}
+
 Base::Placement GeoFeatureGroupExtension::globalGroupPlacement()
 {
     if (getExtendedObject()->isRecomputing()) {
@@ -532,17 +546,6 @@ bool GeoFeatureGroupExtension::isLinkValid(App::Property* prop)
 
     return true;
 }
-
-
-// Treat Body as transparent (no group boundary)
-static inline bool isBodyObject(const App::DocumentObject* obj)
-{
-    if (!obj) return false;
-    const char* tn = obj->getTypeId().getName();
-    return tn && (std::strcmp(tn, "PartDesign::Body") == 0 ||
-                  std::strcmp(tn, "Body") == 0);
-}
-
 
 void GeoFeatureGroupExtension::getInvalidLinkObjects(const DocumentObject* obj,
                                                      std::vector<DocumentObject*>& vec)

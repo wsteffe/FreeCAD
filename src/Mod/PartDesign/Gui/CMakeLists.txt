@@ -214,8 +214,6 @@ SET(PartDesignGuiModule_SRCS
     Workbench.h
     WorkflowManager.cpp
     WorkflowManager.h
-    UniPartCSMigrator.cpp
-    UniPartCSMigrator.h
 )
 SOURCE_GROUP("Module" FILES ${PartDesignGuiModule_SRCS})
 

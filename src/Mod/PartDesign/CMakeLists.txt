@@ -7,7 +7,6 @@ endif(BUILD_GUI)
 set(PartDesign_Scripts
     __init__.py
     Init.py
-    TestPartDesignApp.py
 )
 
 if(BUILD_GUI)
@@ -46,7 +45,6 @@ set(PartDesign_TestScripts
     PartDesignTests/TestPipe.py
     PartDesignTests/TestPrimitive.py
     PartDesignTests/TestMirrored.py
-    PartDesignTests/TestLegacyMigration.py
     PartDesignTests/TestLinearPattern.py
     PartDesignTests/TestPolarPattern.py
     PartDesignTests/TestMultiTransform.py

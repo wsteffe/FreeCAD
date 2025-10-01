@@ -94,6 +94,7 @@ public:
      * system
      */
     Base::Placement globalGroupPlacement();
+    static Base::Placement globalGroupPlacementInBoundary(const App::DocumentObject* obj);
 
     // New: capability flag — does this group act as a link/scope boundary?
     // Default: true (current upstream behavior).

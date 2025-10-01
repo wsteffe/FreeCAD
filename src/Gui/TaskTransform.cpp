@@ -48,9 +48,6 @@
 
 #include <Inventor/nodes/SoPickStyle.h>
 
-boost::signals2::signal<void(App::DocumentObject* obj)>
-    Gui::TaskTransformDialog::signalAccepted;
-
 using namespace Gui;
 
 namespace
@@ -814,7 +811,6 @@ void TaskTransformDialog::onRedo()
 bool TaskTransformDialog::accept()
 {
     if (auto document = vp->getDocument()) {
-        signalAccepted(vp ? vp->getObject() : nullptr);
         document->commitCommand();
         document->resetEdit();
         document->getDocument()->recompute();

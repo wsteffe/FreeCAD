@@ -91,6 +91,7 @@
 #include <App/ObjectIdentifier.h>
 #include <App/Datums.h>
 #include <App/Part.h>
+#include <App/GeoFeatureGroupExtension.h>
 #include <Base/Console.h>
 #include <Base/Reader.h>
 #include <Base/Tools.h>
@@ -8780,7 +8781,8 @@ void SketchObject::rebuildExternalGeometry(std::optional<ExternalToAdd> extToAdd
         }
     }
 
-    Base::Placement Plm = Placement.getValue();
+    Base::Placement grpPlm = App::GeoFeatureGroupExtension::globalGroupPlacementInBoundary(this);
+    Base::Placement Plm = grpPlm*Placement.getValue();
     Base::Vector3d Pos = Plm.getPosition();
     Base::Rotation Rot = Plm.getRotation();
     Base::Rotation invRot = Rot.inverse();
@@ -8824,6 +8826,8 @@ void SketchObject::rebuildExternalGeometry(std::optional<ExternalToAdd> extToAdd
         const std::string &SubElement=SubElements[i];
         const std::string &key = keys[i];
 
+        Base::Placement objPlm = invPlm*App::GeoFeatureGroupExtension::globalGroupPlacementInBoundary(Obj);
+
         bool beingCreated = false;
         if (extToAdd) {
             beingCreated = extToAdd->obj == Obj && extToAdd->subname == SubElement;
@@ -8862,7 +8866,7 @@ void SketchObject::rebuildExternalGeometry(std::optional<ExternalToAdd> extToAdd
             GeomAPI_ProjectPointOnSurf proj(P, gPlane);
             P = proj.NearestPoint();
             Base::Vector3d p(P.X(), P.Y(), P.Z());
-            invPlm.multVec(p, p);
+            objPlm.multVec(p, p);
 
             Part::GeomPoint* point = new Part::GeomPoint(p);
             GeometryFacade::setConstruction(point, true);
@@ -8934,11 +8938,11 @@ void SketchObject::rebuildExternalGeometry(std::optional<ExternalToAdd> extToAdd
             if (projection && !refSubShape.IsNull()) {
                 switch (refSubShape.ShapeType()) {
                 case TopAbs_FACE: {
-                    processFace(invRot, invPlm, mov, sketchPlane, gPlane, sketchAx3, aProjFace, geos, refSubShape);
+                    processFace(invRot, objPlm, mov, sketchPlane, gPlane, sketchAx3, aProjFace, geos, refSubShape);
                 } break;
                 case TopAbs_EDGE: {
                     const TopoDS_Edge& edge = TopoDS::Edge(refSubShape);
-                    processEdge(edge, geos, gPlane, invPlm, mov, sketchPlane, invRot, sketchAx3, aProjFace);
+                    processEdge(edge, geos, gPlane, objPlm, mov, sketchPlane, invRot, sketchAx3, aProjFace);
                 } break;
                 case TopAbs_VERTEX: {
                     importVertex(refSubShape);
@@ -8966,7 +8970,7 @@ void SketchObject::rebuildExternalGeometry(std::optional<ExternalToAdd> extToAdd
                 auto edges = intersectionShape.getSubTopoShapes(TopAbs_EDGE);
                 for (const auto& s : edges) {
                     TopoDS_Edge edge = TopoDS::Edge(s.getShape());
-                    processEdge(edge, geos, gPlane, invPlm, mov, sketchPlane, invRot, sketchAx3, aProjFace);
+                    processEdge(edge, geos, gPlane, objPlm, mov, sketchPlane, invRot, sketchAx3, aProjFace);
                 }
                 // Section of some face (e.g. sphere) produce more than one arcs
                 // from the same circle. So we try to fit the arcs with a single
