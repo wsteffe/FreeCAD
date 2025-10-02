@@ -91,14 +91,7 @@ void BodyBase::onChanged (const App::Property* prop) {
     if ( prop == &BaseFeature && !Tip.getValue() && BaseFeature.getValue() ) {
         Tip.setValue( BaseFeature.getValue () );
     }*/
-    if (prop == &Placement) {
-        for (auto obj : Group.getValues()) {
-            if (obj && obj->getPropertyByName("Placement")) {
-                obj->getPropertyByName("Placement")->touch();
-            }
-        }
-    }
-    Part::Feature::onChanged(prop);
+    Part::Feature::onChanged ( prop );
 }
 
 void BodyBase::handleChangedPropertyName(Base::XMLReader &reader,

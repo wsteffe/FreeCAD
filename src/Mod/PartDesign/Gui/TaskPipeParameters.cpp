@@ -438,23 +438,6 @@ void TaskPipeParameters::setVisibilityOfSpineAndProfile()
     }
 }
 
-static const App::DocumentObject* nearestNonBodyGroup(const App::DocumentObject* o)
-{
-    if (!o) return nullptr;
-
-    const App::DocumentObject* g =
-        o->hasExtension(App::GeoFeatureGroupExtension::getExtensionClassTypeId())
-            ? o
-            : App::GeoFeatureGroupExtension::getGroupOfObject(o);
-
-    // Make Body transparent: climb to the first non-Body geofeature group (or nullptr)
-    while (g && g->isDerivedFrom(PartDesign::Body::getClassTypeId())) {
-        g = App::GeoFeatureGroupExtension::getGroupOfObject(g);
-    }
-    return g; // nullptr == true top-level
-}
-
-
 bool TaskPipeParameters::accept()
 {
     // see what to do with external references
@@ -474,8 +457,7 @@ bool TaskPipeParameters::accept()
     App::DocumentObject* auxSpine = pipe->AuxiliarySpine.getValue();
 
     // Determine the “owner boundary” from the active Body, but make Body transparent.
-    const App::DocumentObject* pcActiveGroupObject =
-        nearestNonBodyGroup(static_cast<const App::DocumentObject*>(pcActiveBody));
+    const App::DocumentObject* pcActiveGroupObject =App::OriginGroupExtension::getBoundaryGroupOfObject(pcActiveBody);
     auto pcActiveGroup = pcActiveGroupObject->getExtensionByType<App::OriginGroupExtension>();
 
 

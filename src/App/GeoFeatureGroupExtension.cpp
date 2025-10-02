@@ -286,6 +286,19 @@ void GeoFeatureGroupExtension::extensionOnChanged(const Property* p)
         }
     }
 
+    if (p == &this->placement() && !this->actsAsGroupBoundary()
+        && !getExtendedObject()->isRestoring()
+        && !getExtendedObject()->getDocument()->isPerformingTransaction()) {
+
+        for (auto* obj : this->Group.getValues()) {
+            if (!obj) continue;
+
+            if (auto* prop = obj->getPropertyByName("Placement"))
+                prop->touch();
+        }
+    }
+
+
     App::GroupExtension::extensionOnChanged(p);
 }
 
