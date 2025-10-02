@@ -28,11 +28,11 @@ name: FreeCAD master CI
 
 on:
   push:
-    branches: [ SimplERBody ]
+    branches: [ "SimplerBody" ]
   pull_request:
-    branches: [ SimplerBody ]
+    branches: [ "SimplerBody" ]
   merge_group:
-    branches: [ SimplerBody ]
+    branches: [ "SimplerBody" ]
   workflow_dispatch:
 
 
