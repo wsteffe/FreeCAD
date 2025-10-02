@@ -55,7 +55,7 @@ public:
     bool allow(App::Document* pDoc, App::DocumentObject* pObj, const char* sSubName) override;
 
 private:
-    App::OriginGroupExtension* getOriginGroupExtension() const;
+    App::OriginGroupExtension* getBoundaryOriginGroupExtension() const;
     bool allowOrigin(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const;
     bool allowDatum(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const;
     bool allowPartFeature(App::DocumentObject* pObj, const char* sSubName) const;

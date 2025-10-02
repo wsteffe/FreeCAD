@@ -64,7 +64,7 @@ bool ReferenceSelection::allow(App::Document* pDoc, App::DocumentObject* pObj, c
     if (!pObj) {
         return false;
     }
-    App::OriginGroupExtension* originGroup = getOriginGroupExtension();
+    App::OriginGroupExtension* originGroup = getBoundaryOriginGroupExtension();
 
     // Don't allow selection in other document
     if (support && pDoc != support->getDocument()) {
@@ -111,11 +111,21 @@ bool ReferenceSelection::allow(App::Document* pDoc, App::DocumentObject* pObj, c
 }
 
 
-App::OriginGroupExtension* ReferenceSelection::getOriginGroupExtension() const
+App::OriginGroupExtension* ReferenceSelection::getBoundaryOriginGroupExtension() const
 {
-    auto originGroupObject = App::GeoFeatureGroupExtension::getBoundaryGroupOfObject(support);
-    if (!originGroupObject) {// fallback to active part
-        originGroupObject = PartDesignGui::getActivePart();
+    const App::DocumentObject* originGroupObject = nullptr;
+
+    auto* body = support ? PartDesign::Body::findBodyOf(support)
+                         : PartDesignGui::getBody(false);
+    if (body) { // Search for Part of the body
+        originGroupObject = App::OriginGroupExtension::getBoundaryGroupOfObject(body);
+    }
+    else if (support) { // if no body search part for support
+        originGroupObject = App::OriginGroupExtension::getBoundaryGroupOfObject(support);
+    }
+    else { // fallback to active part
+        App::DocumentObject* part=PartDesignGui::getActivePart();
+        originGroupObject = App::OriginGroupExtension::getBoundaryGroupOfObject(part);
     }
 
     App::OriginGroupExtension* originGroup = nullptr;
@@ -124,6 +134,7 @@ App::OriginGroupExtension* ReferenceSelection::getOriginGroupExtension() const
 
     return originGroup;
 }
+
 
 bool ReferenceSelection::allowOrigin(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const
 {
