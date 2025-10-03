@@ -417,7 +417,7 @@ public:
 
     void findDatumPlanes()
     {
-        App::GeoFeatureGroupExtension *geoGroup = getBoundaryGroupExtensionOfBody(activeBody);
+        App::GeoFeatureGroupExtension *boundaryGroup = getBoundaryGroupExtensionOfBody(activeBody);
         const std::vector<Base::Type> types = { PartDesign::Plane::getClassTypeId(), App::Plane::getClassTypeId() };
         auto datumPlanes = appdocument->getObjectsOfType(types);
 
@@ -427,6 +427,9 @@ public:
             }
             if(App::OriginGroupExtension::getGroupOfObject(plane))
                 continue;
+            if(boundaryGroup) 
+                if(!boundaryGroup->hasObject(plane,true))
+                    continue;
             planes.push_back ( plane );
             // Check whether this plane belongs to the active body
             if ( activeBody->hasObject(plane, true) ) {
@@ -438,19 +441,21 @@ public:
                 }
             } else {
                 PartDesign::Body *planeBody = PartDesign::Body::findBodyOf (plane);
+                App::Part *activePart = PartDesignGui::getActivePart();
+                auto planePart = PartDesignGui::getPartFor(plane, false);
                 if ( planeBody ) {
-                    if ( ( geoGroup && geoGroup->hasObject ( planeBody, true ) ) ||
-                           !App::GeoFeatureGroupExtension::getGroupOfObject (planeBody) ) {
+                    if ( !activePart || (activePart && activePart->hasObject ( planeBody, true ) )) {
                         status.push_back ( PartDesignGui::TaskFeaturePick::otherBody );
-                    } else {
-                        status.push_back ( PartDesignGui::TaskFeaturePick::otherPart );
-                    }
-                } else {
-                    if ( ( geoGroup && geoGroup->hasObject ( plane, true ) ) ||
-                           !App::GeoFeatureGroupExtension::getGroupOfObject ( plane ) ) {
+                    } else if (planePart) {
                         status.push_back ( PartDesignGui::TaskFeaturePick::otherPart );
                     } else {
                         status.push_back ( PartDesignGui::TaskFeaturePick::notInBody );
+                    }
+                } else {
+                    if (planePart) {
+                        status.push_back ( PartDesignGui::TaskFeaturePick::otherPart );
+                    } else {
+                        status.push_back ( PartDesignGui::TaskFeaturePick::notInPart );
                     }
                 }
             }
