@@ -134,7 +134,8 @@ App::OriginGroupExtension* ReferenceSelection::getBoundaryOriginGroupExtension()
 }
 
 
-bool ReferenceSelection::allowOrigin(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const
+bool ReferenceSelection::allowOrigin(App::OriginGroupExtension* originGroup,
+                                     App::DocumentObject* pObj) const
 {
     bool fits = false;
     if (type.testFlag(AllowSelection::FACE) && pObj->isDerivedFrom<App::Plane>()) {
@@ -144,35 +145,39 @@ bool ReferenceSelection::allowOrigin(App::OriginGroupExtension* originGroup, App
         fits = true;
     }
 
-    if (fits) { // check that it actually belongs to the chosen group
-        try { // here are some throwers
-            if (originGroup ) {
-                if (originGroup->hasObject(pObj, true)) {
-                    return true;
-                }
+    if (fits) {  // check that it actually belongs to the chosen group
+        try {    // here are some throwers
+            if (!originGroup) {
+                return true;
+            }
+            if (originGroup->hasObject(pObj, true)) {
+                return true;
             }
         }
         catch (const Base::Exception&) {
         }
     }
-    return false; // The Plane/Axis doesn't fits our needs
+    return false;  // The Plane/Axis doesn't fits our needs
 }
 
-bool ReferenceSelection::allowDatum(App::OriginGroupExtension* originGroup, App::DocumentObject* pObj) const
+bool ReferenceSelection::allowDatum(App::OriginGroupExtension* originGroup,
+                                    App::DocumentObject* pObj) const
 {
-
-    if (originGroup ) {
-        if (originGroup->hasObject(pObj, true)) {
-                    return true;
-        }
+    if (!originGroup) {
+        return true;
     }
-    if (type.testFlag(AllowSelection::FACE) && (pObj->isDerivedFrom<PartDesign::Plane>()))
+    if (originGroup->hasObject(pObj, true)) {
         return true;
-    if (type.testFlag(AllowSelection::EDGE) && (pObj->isDerivedFrom<PartDesign::Line>()))
+    }
+    if (type.testFlag(AllowSelection::FACE) && (pObj->isDerivedFrom<PartDesign::Plane>())) {
         return true;
-    if (type.testFlag(AllowSelection::POINT) && (pObj->isDerivedFrom<PartDesign::Point>()))
+    }
+    if (type.testFlag(AllowSelection::EDGE) && (pObj->isDerivedFrom<PartDesign::Line>())) {
         return true;
-
+    }
+    if (type.testFlag(AllowSelection::POINT) && (pObj->isDerivedFrom<PartDesign::Point>())) {
+        return true;
+    }
     return false;
 }
 
