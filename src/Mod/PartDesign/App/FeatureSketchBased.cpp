@@ -702,9 +702,12 @@ Part::Feature* ProfileBased::getBaseObject(bool silent) const
         err = "No base set, no sketch support either";
     }
 
-    PartDesign::Body* body= Feature::getFeatureBody();
-    if(body && spt) if(!body->hasObject(spt))
-        return nullptr;
+    PartDesign::Body* body = Feature::getFeatureBody();
+    if (body && spt) {
+        if (!body->hasObject(spt)) {
+            return nullptr;
+        }
+    }
 
     if (!silent && err) {
         throw Base::RuntimeError(err);
@@ -732,7 +735,7 @@ void ProfileBased::getUpToFaceFromLinkSub(TopoShape& upToFace, const App::Proper
     }
 
     Base::Placement groupPla;
-    groupPla=App::GeoFeatureGroupExtension::globalGroupPlacementInBoundary(ref);
+    groupPla = App::GeoFeatureGroupExtension::globalGroupPlacementInBoundary(ref);
 
     if (ref->isDerivedFrom<App::Plane>()) {
         upToFace = makeShapeFromPlane(ref);
@@ -753,10 +756,9 @@ void ProfileBased::getUpToFaceFromLinkSub(TopoShape& upToFace, const App::Proper
     }
 
     if (!groupPla.isIdentity()) {
-        TopLoc_Location groupLoc=Part::Tools::fromPlacement(groupPla);
+        TopLoc_Location groupLoc = Part::Tools::fromPlacement(groupPla);
         upToFace.move(groupLoc);
     }
-
 }
 
 int ProfileBased::getUpToShapeFromLinkSubList(
@@ -772,8 +774,8 @@ int ProfileBased::getUpToShapeFromLinkSubList(
     for (auto& subSet : subSets) {
         auto ref = subSet.first;
         Base::Placement groupPla;
-        groupPla=App::GeoFeatureGroupExtension::globalGroupPlacementInBoundary(ref);
-        TopLoc_Location groupLoc=Part::Tools::fromPlacement(groupPla);
+        groupPla = App::GeoFeatureGroupExtension::globalGroupPlacementInBoundary(ref);
+        TopLoc_Location groupLoc = Part::Tools::fromPlacement(groupPla);
         if (ref->isDerivedFrom<App::Plane>()) {
             faceList.push_back(makeTopoShapeFromPlane(ref));
             ret++;
@@ -792,9 +794,9 @@ int ProfileBased::getUpToShapeFromLinkSubList(
                 );
 
 
-                for (auto face : baseShape.getSubTopoShapes(TopAbs_FACE)){
+                for (auto face : baseShape.getSubTopoShapes(TopAbs_FACE)) {
                     if (!groupPla.isIdentity()) {
-                       face.move(groupLoc);
+                        face.move(groupLoc);
                     }
                     faceList.push_back(face);
                     ret++;
@@ -815,7 +817,7 @@ int ProfileBased::getUpToShapeFromLinkSubList(
                         throw Base::ValueError("SketchBased: Failed to extract face");
                     }
                     if (!groupPla.isIdentity()) {
-                       face.move(groupLoc);
+                        face.move(groupLoc);
                     }
                     faceList.push_back(face);
                     ret++;
