@@ -163,7 +163,7 @@ private:
 
     static void recursiveCSRelevantLinks(const App::DocumentObject* obj,
                                          std::vector<App::DocumentObject*>& vec);
-    bool m_actsAsGroupBoundary = true;
+    bool m_actsAsGroupBoundary = false;
 
     static std::map<App::Document*, std::vector<App::DocumentObject*>> s_docPendingPlacementTouches;
 
